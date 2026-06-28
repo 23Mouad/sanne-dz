@@ -1,0 +1,29 @@
+node_modules
+dist
+
+# Keep environment variables out of version control
+.env
+.env.local
+.env.production
+
+# Prisma generated client
+/generated/prisma
+
+# Test files with credentials (DO NOT commit)
+test_*.js
+test_*.ts
+test-*.js
+test-*.ts
+create_test*.js
+activate_partners.ts
+seed_output.log
+
+# Upload directory (user content, not code)
+uploads/
+
+# Build output
+/dist
+
+# Temp files
+*.tmp
+temp.*

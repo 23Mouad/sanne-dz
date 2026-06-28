@@ -1,0 +1,392 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   SANNE DZ — Design System
+   Palette: Rose #C2517A · Violet #7F77DD · Fond #FDF2F8
+   ============================================================ */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    @apply font-sans;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #fdf8fc;
+    color: #1a0a12;
+    @apply bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-inter), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* RTL Support */
+  [dir="rtl"] {
+    font-family: var(--font-cairo), system-ui, sans-serif;
+  }
+  [dir="rtl"] h1, 
+  [dir="rtl"] h2, 
+  [dir="rtl"] h3, 
+  [dir="rtl"] h4, 
+  [dir="rtl"] h5 {
+    font-family: var(--font-cairo), system-ui, sans-serif;
+  }
+  
+  /* Invert direction-specific icons */
+  [dir="rtl"] .lucide-chevron-right {
+    transform: rotate(180deg);
+  }
+  [dir="rtl"] .lucide-chevron-left {
+    transform: rotate(180deg);
+  }
+  [dir="rtl"] .lucide-arrow-right {
+    transform: rotate(180deg);
+  }
+  [dir="rtl"] .lucide-arrow-left {
+    transform: rotate(180deg);
+  }
+}
+
+@layer components {
+
+  /* ===== Buttons ===== */
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-[#C2517A] to-[#a8365f]
+           text-white px-5 py-2.5 rounded-xl font-semibold
+           hover:from-[#a8365f] hover:to-[#8c2a4f]
+           active:scale-95
+           transition-all duration-200 shadow-md hover:shadow-lg
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+           flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-gradient-to-r from-[#7F77DD] to-[#6059c4]
+           text-white px-5 py-2.5 rounded-xl font-semibold
+           hover:from-[#6059c4] hover:to-[#4e44ab]
+           active:scale-95
+           transition-all duration-200 shadow-md hover:shadow-lg
+           disabled:opacity-50 disabled:cursor-not-allowed
+           flex items-center justify-center gap-2;
+  }
+
+  .btn-outline {
+    @apply border-2 border-[#C2517A] text-[#C2517A] px-5 py-2.5 rounded-xl font-medium
+           hover:bg-[#C2517A] hover:text-white
+           transition-all duration-200 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply text-gray-600 px-4 py-2 rounded-xl font-medium
+           hover:bg-pink-50 hover:text-[#C2517A] transition-all duration-200;
+  }
+
+  .btn-whatsapp {
+    @apply bg-[#25D366] text-white px-5 py-2.5 rounded-xl font-semibold
+           hover:bg-[#1da851] active:scale-95
+           transition-all duration-200 shadow-md
+           flex items-center justify-center gap-2;
+  }
+
+  /* ===== Inputs ===== */
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-pink-200 rounded-xl
+           text-gray-800 placeholder-gray-400 bg-white
+           focus:border-[#C2517A] focus:ring-2 focus:ring-pink-100 focus:outline-none
+           transition-all duration-200;
+  }
+
+  .input-error {
+    @apply border-red-300 focus:border-red-400 focus:ring-red-100;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  /* ===== Cards ===== */
+
+  .card {
+    @apply bg-white rounded-2xl border border-pink-100 shadow-sm
+           hover:shadow-md transition-all duration-300;
+  }
+
+  .card-glass {
+    @apply bg-white/80 backdrop-blur-md rounded-2xl border border-white/60
+           shadow-lg;
+  }
+
+  /* ===== Badges ===== */
+
+  .badge-pro {
+    @apply bg-gradient-to-r from-[#C2517A] to-[#7F77DD]
+           text-white text-xs font-bold px-2.5 py-1 rounded-full
+           shadow-sm inline-flex items-center gap-1;
+  }
+
+  .badge-simple {
+    @apply bg-gray-100 text-gray-600 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .badge-pending {
+    @apply bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .badge-active {
+    @apply bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .badge-suspended {
+    @apply bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  /* ===== Container ===== */
+
+  .container-main {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* ===== Sections ===== */
+
+  .section {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+
+  /* ===== Titles ===== */
+
+  .page-title {
+    @apply text-3xl sm:text-4xl font-bold text-gray-900 leading-tight;
+  }
+
+  .page-subtitle {
+    @apply text-lg text-gray-500 mt-3 leading-relaxed;
+  }
+
+  .section-title {
+    @apply text-2xl sm:text-3xl font-bold text-gray-900;
+  }
+
+  /* ===== Gradient Text ===== */
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-[#C2517A] to-[#7F77DD] bg-clip-text text-transparent;
+  }
+
+  /* ===== Gradient Background ===== */
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-[#C2517A] via-[#9c4568] to-[#7F77DD];
+  }
+
+  .gradient-bg-soft {
+    @apply bg-gradient-to-br from-pink-50 via-white to-purple-50;
+  }
+
+  /* ===== Dashboard Layout ===== */
+
+  .dashboard-sidebar {
+    @apply w-64 bg-white border-r border-pink-100 flex-shrink-0 min-h-screen;
+  }
+
+  .dashboard-content {
+    @apply flex-1 min-h-screen bg-gradient-to-br from-pink-50/50 to-purple-50/30 p-6;
+  }
+
+  .stats-card {
+    @apply bg-white rounded-2xl border border-pink-100 shadow-sm p-6
+           hover:shadow-md transition-all duration-200;
+  }
+
+  /* ===== Divider ===== */
+
+  .divider {
+    @apply border-t border-pink-100 my-6;
+  }
+
+  /* ===== Skeleton loading ===== */
+
+  .skeleton {
+    @apply animate-pulse bg-gradient-to-r from-pink-100 via-pink-50 to-pink-100
+           rounded-lg bg-[length:200%_100%];
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* ===== Tag / Chip ===== */
+
+  .tag {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full
+           bg-pink-50 text-[#C2517A] text-sm font-medium
+           hover:bg-pink-100 transition-colors cursor-pointer;
+  }
+
+  /* ===== Form groups ===== */
+
+  .form-group {
+    @apply flex flex-col gap-1.5;
+  }
+
+  /* ===== Nav link active ===== */
+
+  .nav-link {
+    @apply text-gray-600 hover:text-[#C2517A] font-medium transition-colors duration-150 text-sm;
+  }
+
+  .nav-link-active {
+    @apply text-[#C2517A] font-semibold;
+  }
+}
+
+/* ===== Custom Keyframes ===== */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* ===== Tailwind Theme Inline ===== */
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ===== CSS Variables — Sanne DZ Rose/Violet Theme ===== */
+
+:root {
+  --background:   oklch(0.99 0.005 350);
+  --foreground:   oklch(0.15 0.02 340);
+  --card:         oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 340);
+  --popover:      oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 340);
+  --primary:      oklch(0.52 0.12 350);   /* #C2517A */
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary:    oklch(0.56 0.09 280);   /* #7F77DD */
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted:        oklch(0.96 0.01 350);
+  --muted-foreground: oklch(0.55 0.03 350);
+  --accent:       oklch(0.96 0.01 280);
+  --accent-foreground: oklch(0.15 0.02 340);
+  --destructive:  oklch(0.577 0.245 27.325);
+  --border:       oklch(0.93 0.02 350);
+  --input:        oklch(0.93 0.02 350);
+  --ring:         oklch(0.52 0.12 350);
+  --chart-1:      oklch(0.52 0.12 350);
+  --chart-2:      oklch(0.56 0.09 280);
+  --chart-3:      oklch(0.68 0.10 350);
+  --chart-4:      oklch(0.72 0.08 280);
+  --chart-5:      oklch(0.80 0.06 350);
+  --radius: 0.625rem;
+  --sidebar:      oklch(0.99 0.005 350);
+  --sidebar-foreground: oklch(0.15 0.02 340);
+  --sidebar-primary: oklch(0.52 0.12 350);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.96 0.01 350);
+  --sidebar-accent-foreground: oklch(0.15 0.02 340);
+  --sidebar-border: oklch(0.93 0.02 350);
+  --sidebar-ring:  oklch(0.52 0.12 350);
+}
+
+.dark {
+  --background:   oklch(0.12 0.02 340);
+  --foreground:   oklch(0.97 0.005 350);
+  --card:         oklch(0.17 0.02 340);
+  --card-foreground: oklch(0.97 0.005 350);
+  --popover:      oklch(0.17 0.02 340);
+  --popover-foreground: oklch(0.97 0.005 350);
+  --primary:      oklch(0.68 0.12 350);
+  --primary-foreground: oklch(0.12 0.02 340);
+  --secondary:    oklch(0.65 0.09 280);
+  --secondary-foreground: oklch(0.12 0.02 340);
+  --muted:        oklch(0.22 0.02 340);
+  --muted-foreground: oklch(0.65 0.04 350);
+  --accent:       oklch(0.22 0.02 280);
+  --accent-foreground: oklch(0.97 0.005 350);
+  --destructive:  oklch(0.704 0.191 22.216);
+  --border:       oklch(1 0 0 / 10%);
+  --input:        oklch(1 0 0 / 15%);
+  --ring:         oklch(0.68 0.12 350);
+  --chart-1:      oklch(0.68 0.12 350);
+  --chart-2:      oklch(0.65 0.09 280);
+  --chart-3:      oklch(0.75 0.10 350);
+  --chart-4:      oklch(0.78 0.08 280);
+  --chart-5:      oklch(0.82 0.06 350);
+  --sidebar:      oklch(0.17 0.02 340);
+  --sidebar-foreground: oklch(0.97 0.005 350);
+  --sidebar-primary: oklch(0.68 0.12 350);
+  --sidebar-primary-foreground: oklch(0.12 0.02 340);
+  --sidebar-accent: oklch(0.22 0.02 340);
+  --sidebar-accent-foreground: oklch(0.97 0.005 350);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring:  oklch(0.68 0.12 350);
+}

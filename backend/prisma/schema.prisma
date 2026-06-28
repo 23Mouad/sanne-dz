@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                    String         @id @default(cuid())
+  email                 String         @unique
+  phone                 String         @unique
+  firstName             String
+  lastName              String
+  password              String
+  role                  UserRole       @default(CLIENT)
+  wilayaId              String?
+  avatar                String?
+  isEmailVerified       Boolean        @default(false)
+  isPhoneVerified       Boolean        @default(false)
+  isActive              Boolean        @default(true)
+  fcmToken              String?
+  refreshToken          String?
+  refreshTokenExpiresAt DateTime?
+  emailVerifyToken      String?
+  emailVerifyExpires    DateTime?
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  failedLoginAttempts   Int            @default(0)
+  lockedUntil           DateTime?
+  preferredCategoryIds  String[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  favorites             Favorite[]
+  notifications         Notification[]
+  partner               Partner?
+  reviews               Review[]
+  wilaya                Wilaya?        @relation(fields: [wilayaId], references: [id])
+
+  @@map("users")
+}
+
+model Wilaya {
+  id       String    @id
+  name     String    @unique
+  isActive Boolean   @default(true)
+  partners Partner[]
+  users    User[]
+
+  @@map("wilayas")
+}
+
+model Category {
+  id            String            @id @default(cuid())
+  slug          String            @unique
+  name          String
+  icon          String
+  color         String            @default("from-gray-400 to-gray-600")
+  description   String?
+  order         Int               @default(0)
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  partners      PartnerCategory[]
+  subCategories SubCategory[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  name            String
+  categoryId      String
+  childCategories ChildCategory[]
+  category        Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("sub_categories")
+}
+
+model ChildCategory {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  name          String
+  subCategoryId String
+  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+
+  @@map("child_categories")
+}
+
+model PartnerCategory {
+  partnerId  String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  partner    Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@id([partnerId, categoryId])
+  @@map("partner_categories")
+}
+
+model Partner {
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  slug                String            @unique
+  businessName        String
+  description         String
+  logoUrl             String?
+  coverUrl            String?
+  wilayaId            String?
+  address             String?
+  mapLink             String?
+  deliveryType        String?
+  phone               String
+  whatsapp            String
+  email               String
+  website             String?
+  facebook            String?
+  instagram           String?
+  tiktok              String?
+  registreCommerce    String?
+  status              PartnerStatus     @default(PENDING)
+  isPro               Boolean           @default(false)
+  isFeatured          Boolean           @default(false)
+  rating              Float             @default(0)
+  reviewCount         Int               @default(0)
+  rejectionReason     String?
+  schedule            Json?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  deletionRequestedAt DateTime?
+  achievements        String[]
+  appointmentStatus   String?           @default("Non")
+  deliveryAvailable   Boolean           @default(false)
+  minOrder            String?
+  remoteWork          Boolean           @default(false)
+  services            String[]
+  favorites           Favorite[]
+  categories          PartnerCategory[]
+  photos              PartnerPhoto[]
+  stats               PartnerStats?
+  videos              PartnerVideo[]
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wilaya              Wilaya?           @relation(fields: [wilayaId], references: [id])
+  products            Product[]
+  reviews             Review[]
+  subscription        Subscription?
+
+  @@map("partners")
+}
+
+model PartnerPhoto {
+  id        String   @id @default(cuid())
+  partnerId String
+  url       String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("partner_photos")
+}
+
+model PartnerVideo {
+  id        String   @id @default(cuid())
+  partnerId String
+  url       String
+  thumbnail String?
+  caption   String?
+  createdAt DateTime @default(now())
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("partner_videos")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  partnerId   String
+  name        String?
+  description String?
+  price       Float?
+  promoPrice  Float?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
+
+model PartnerStats {
+  id             String   @id @default(cuid())
+  partnerId      String   @unique
+  profileViews   Int      @default(0)
+  whatsappClicks Int      @default(0)
+  phoneClicks    Int      @default(0)
+  favoritesCount Int      @default(0)
+  viewsHistory   Json     @default("[]")
+  clicksHistory  Json     @default("[]")
+  updatedAt      DateTime @updatedAt
+  partner        Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("partner_stats")
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  partnerId    String
+  authorId     String
+  rating       Int
+  comment      String
+  status       ReviewStatus @default(PENDING)
+  isReported   Boolean      @default(false)
+  reportReason String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  author       User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  partner      Partner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, authorId])
+  @@map("reviews")
+}
+
+model Subscription {
+  id        String            @id @default(cuid())
+  partnerId String            @unique
+  plan      SubscriptionPlan  @default(SIMPLE)
+  cycle     SubscriptionCycle @default(MONTHLY)
+  startDate DateTime          @default(now())
+  endDate   DateTime?
+  price     Float             @default(0)
+  isActive  Boolean           @default(true)
+  autoRenew Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  payments  Payment[]
+  partner   Partner           @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  amount         Float
+  currency       String        @default("DZD")
+  method         String?
+  status         PaymentStatus @default(PENDING)
+  reference      String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model SubscriptionConfig {
+  id                    String   @id @default(cuid())
+  simplePriceMonthly    Float    @default(0)
+  simplePriceAnnual     Float    @default(0)
+  proPriceMonthly       Float    @default(2500)
+  proPriceAnnual        Float    @default(28000)
+  trialDays             Int      @default(14)
+  annualDiscountPercent Float    @default(20)
+  updatedAt             DateTime @updatedAt
+
+  @@map("subscription_config")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  clientId  String
+  partnerId String
+  createdAt DateTime @default(now())
+  client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, partnerId])
+  @@map("favorites")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  link      String?
+  data      Json?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model AppConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("app_config")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+model BroadcastLog {
+  id           String   @id @default(cuid())
+  title        String
+  message      String
+  target       String   @default("all")
+  wilayaId     String?
+  categorySlug String?
+  count        Int      @default(0)
+  sentAt       DateTime @default(now())
+
+  @@map("broadcast_logs")
+}
+
+enum UserRole {
+  CLIENT
+  PARTNER
+  ADMIN
+}
+
+enum PartnerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum SubscriptionPlan {
+  SIMPLE
+  PRO
+}
+
+enum SubscriptionCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  NEW_REVIEW
+  NEW_PARTNER
+  SUBSCRIPTION_EXPIRING
+  ACCOUNT_VALIDATED
+  ACCOUNT_REJECTED
+  PROMO
+  BROADCAST
+}
