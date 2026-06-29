@@ -63,6 +63,10 @@ export default function ClientNotificationsPage() {
     try {
       await NotificationsService.markAllRead()
       setNotifs(ns => ns.map(n => ({ ...n, isRead: true })))
+      // Dispatch a global event so the sidebar badge resets immediately
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('notifs:all-read'))
+      }
     } catch {
       toast.error('Erreur')
     }

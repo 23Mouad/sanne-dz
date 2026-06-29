@@ -16,6 +16,7 @@ interface AuthUser {
   partnerStatus?: 'pending' | 'active' | 'suspended'
   businessName?: string
   plan?: 'simple' | 'pro'
+  createdAt?: string
 }
 
 interface AuthState {
@@ -83,6 +84,7 @@ export const useAuthStore = create<AuthState>()(
               plan: userProfile.partner?.plan,
               partnerStatus: userProfile.partner?.status as any,
               businessName: userProfile.partner?.businessName,
+              createdAt: userProfile.createdAt,
             },
             isAuthenticated: true,
             isLoading: false,

@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 import { PartnerStatus, NotificationType } from '@prisma/client';
+import { randomInt } from 'crypto';
+import * as bcrypt from 'bcrypt';
+
+// In-memory OTP store for admin password changes (TTL 10 minutes)
+const adminOtpStore = new Map<string, { otp: string; newPasswordHash: string; expiresAt: Date }>();
 
 @Injectable()
 export class AdminService {
@@ -10,6 +16,7 @@ export class AdminService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private mailService: MailService,
+    private configService: ConfigService,
   ) {}
 
   // ===== PARTNERS =====
@@ -166,9 +173,11 @@ export class AdminService {
   }
 
   // ===== USERS =====
-  async getUsers(search?: string, page = 1, limit = 20) {
+  async getUsers(search?: string, page = 1, limit = 20, status?: string) {
     const skip = (page - 1) * limit;
     const where: Record<string, unknown> = { role: 'CLIENT' };
+    if (status === 'blocked') where.isActive = false;
+    else if (status === 'active') where.isActive = true;
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
@@ -194,7 +203,19 @@ export class AdminService {
     // Send ban notification email
     this.mailService.sendAccountBanned(user.email, user.firstName);
 
-    return { message: 'User banned' };
+    return { message: 'User blocked' };
+  }
+
+  async unbanUser(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true } });
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.prisma.user.update({ where: { id: userId }, data: { isActive: true } });
+
+    // Send unban notification email
+    this.mailService.sendAccountUnbanned(user.email, user.firstName);
+
+    return { message: 'User unblocked' };
   }
 
   async deleteUser(userId: string) {
@@ -403,4 +424,55 @@ export class AdminService {
     await Promise.all(promises);
     return { success: true };
   }
+
+  // ===== ADMIN PASSWORD CHANGE WITH OTP =====
+  async requestPasswordChangeOtp(adminId: string, newPassword: string) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters');
+    }
+
+    const admin = await this.prisma.user.findUnique({
+      where: { id: adminId },
+      select: { email: true, role: true },
+    });
+    if (!admin || admin.role !== 'ADMIN') throw new ForbiddenException('Not authorized');
+
+    const otp = randomInt(100000, 999999).toString();
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store OTP keyed by adminId
+    adminOtpStore.set(adminId, { otp, newPasswordHash, expiresAt });
+
+    // Send OTP email to admin
+    await this.mailService.sendAdminPasswordOtp(admin.email, otp);
+
+    return { message: 'OTP sent to your email. Valid for 10 minutes.' };
+  }
+
+  async confirmPasswordChange(adminId: string, otp: string) {
+    const stored = adminOtpStore.get(adminId);
+    if (!stored) throw new BadRequestException('No pending OTP request. Please request a new code.');
+    if (new Date() > stored.expiresAt) {
+      adminOtpStore.delete(adminId);
+      throw new BadRequestException('OTP has expired. Please request a new code.');
+    }
+    if (stored.otp !== otp) throw new BadRequestException('Invalid OTP code.');
+
+    // Apply the new password
+    await this.prisma.user.update({
+      where: { id: adminId },
+      data: { password: stored.newPasswordHash, refreshToken: null },
+    });
+
+    adminOtpStore.delete(adminId);
+
+    const admin = await this.prisma.user.findUnique({ where: { id: adminId }, select: { email: true } });
+    if (admin) {
+      this.mailService.sendSecurityAlert(admin.email, 'Mot de passe administrateur modifié avec succès.');
+    }
+
+    return { message: 'Password changed successfully.' };
+  }
 }
+

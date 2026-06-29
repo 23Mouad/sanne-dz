@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -53,24 +53,62 @@ export class CategoriesService {
 
   async create(dto: CreateCategoryDto) {
     const slug = this.toSlug(dto.name);
+
+    // Check if a category with this slug already exists
     const existing = await this.prisma.category.findUnique({ where: { slug } });
-    if (existing) throw new ConflictException('Category with this name already exists');
+
+    if (existing) {
+      // If it exists but is soft-deleted (isActive: false), reactivate it
+      if (!existing.isActive) {
+        return this.prisma.category.update({
+          where: { slug },
+          data: {
+            name: dto.name,
+            icon: dto.icon,
+            color: dto.color ?? existing.color,
+            description: dto.description ?? existing.description,
+            isActive: true,
+          },
+        });
+      }
+      // If it exists and is active, reject
+      throw new ConflictException('Category with this name already exists');
+    }
 
     const count = await this.prisma.category.count();
     return this.prisma.category.create({
-      data: { name: dto.name, slug, icon: dto.icon, color: dto.color ?? 'from-gray-400 to-gray-600', description: dto.description, order: count },
+      data: {
+        name: dto.name,
+        slug,
+        icon: dto.icon,
+        color: dto.color ?? 'from-gray-400 to-gray-600',
+        description: dto.description,
+        order: count,
+      },
     });
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
     const cat = await this.prisma.category.findUnique({ where: { id } });
     if (!cat) throw new NotFoundException('Category not found');
+
+    // Prevent editing default/main categories
+    if ((cat as any).isDefault) {
+      throw new ForbiddenException('Default categories cannot be modified');
+    }
+
     return this.prisma.category.update({ where: { id }, data: dto });
   }
 
   async remove(id: string) {
     const cat = await this.prisma.category.findUnique({ where: { id } });
     if (!cat) throw new NotFoundException('Category not found');
+
+    // Prevent deleting default/main categories
+    if ((cat as any).isDefault) {
+      throw new ForbiddenException('Default categories cannot be deleted');
+    }
+
     await this.prisma.category.update({ where: { id }, data: { isActive: false } });
     return { message: 'Category deactivated' };
   }

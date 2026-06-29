@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Mail, Lock, Zap } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import Image from 'next/image'
 import { useAuthStore } from '@/store/useAuthStore'
 import { AuthService } from '@/services/auth.service'
@@ -85,28 +85,6 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mt-1">{t(d.loginSub)}</p>
         </div>
 
-        {/* Demo shortcuts */}
-        <div className="bg-pink-50 rounded-xl p-3 mb-6 border border-pink-100">
-          <p className="flex items-center text-xs font-semibold text-[#C2517A] mb-2">
-            <Zap size={14} className="mr-1.5 rtl:ml-1.5" /> {t(d.demoQuick)}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { label: t(d.client), email: 'amina123C@gmail.com' , pass: 'amina123CC@gmail.com' },
-              { label: t(d.partner), email: 'amir123K@gmail.com' , pass: 'amir123K@gmail.com' },
-              { label: t(d.admin), email: 'admin@sanne.dz' , pass: 'admin123' },
-            ].map(({ label, email: e  , pass: p}) => (
-              <button
-                key={label}
-                onClick={() => { setEmail(e); setPassword(p) }}
-                className="text-xs px-2.5 py-1 bg-white rounded-lg border border-pink-200
-                           text-[#C2517A] hover:bg-[#C2517A] hover:text-white transition-colors font-medium"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

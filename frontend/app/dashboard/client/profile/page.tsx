@@ -79,10 +79,11 @@ export default function ClientProfilePage() {
     try {
       toast.loading('Uploading...', { id: 'avatar-upload' })
       const res = await AuthService.uploadAvatar(file)
-      updateUser({ avatar: res.avatar })
-      toast.success('Avatar updated!', { id: 'avatar-upload' })
+      // Refresh full user profile so avatar updates everywhere (reviews, sidebar, etc.)
+      await useAuthStore.getState().initialize()
+      toast.success('Photo de profil mise à jour !', { id: 'avatar-upload' })
     } catch (error) {
-      toast.error('Failed to upload avatar', { id: 'avatar-upload' })
+      toast.error('Échec du téléchargement', { id: 'avatar-upload' })
     }
   }
 
@@ -120,7 +121,12 @@ export default function ClientProfilePage() {
           <div>
             <p className="font-bold text-gray-900">{form.firstName} {form.lastName}</p>
             <p className="text-sm text-[#C2517A]">{t(d.role)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{t(d.memberSince)}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {user?.createdAt
+                ? `${t(d.memberSince)} ${new Date(user.createdAt as string).toLocaleDateString('fr-DZ', { year: 'numeric', month: 'long' })}`
+                : t(d.memberSince)
+              }
+            </p>
           </div>
         </div>
       </div>

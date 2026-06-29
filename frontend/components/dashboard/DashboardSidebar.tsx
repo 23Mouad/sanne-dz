@@ -71,6 +71,13 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
     }
   }, [user])
 
+  // Reset badge immediately when user marks all as read on the notifications page
+  useEffect(() => {
+    const handler = () => setUnreadNotifs(0)
+    window.addEventListener('notifs:all-read', handler)
+    return () => window.removeEventListener('notifs:all-read', handler)
+  }, [])
+
   const adminNav: NavItem[] = [
     { href: '/dashboard/admin',               labelKey: s.nav.globalView,      icon: LayoutDashboard },
     { href: '/dashboard/admin/partners',      labelKey: s.nav.partners,        icon: Briefcase, badge: pendingCounts.partners > 0 ? pendingCounts.partners : undefined },
@@ -108,7 +115,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C2517A] to-[#7F77DD] flex items-center justify-center">
             <Sparkles size={15} className="text-white" />
           </div>
-          <span className="text-lg font-bold gradient-text">Sanne<span className="text-[#7F77DD]">DZ</span></span>
+          <span className="text-lg font-bold gradient-text">Sanne<span className="text-[#7F77DD]"> Textile DZ</span></span>
         </Link>
         {onMobileClose && (
           <button onClick={onMobileClose} className="lg:hidden text-gray-400 hover:text-gray-600">

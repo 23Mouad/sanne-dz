@@ -21,8 +21,9 @@ export class MailService {
   }
 
   private getBaseTemplate(content: string, title: string): string {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    const logoUrl = `${frontendUrl}/logoMain.png`;
+    // Use absolute production logo URL so it renders in email clients
+    const logoUrl = 'https://textile-dz.tech/logoMain.png';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://textile-dz.tech';
 
     return `
 <!DOCTYPE html>
@@ -139,15 +140,15 @@ export class MailService {
   <div class="email-wrapper">
     <div class="email-container">
       <div class="email-header">
-        <img src="${logoUrl}" alt="Sanne DZ Logo">
+        <img src="${logoUrl}" alt="Sanne Textile DZ Logo">
       </div>
       <div class="email-body">
         ${content}
       </div>
-      <div class="email-footer">
-        &copy; ${new Date().getFullYear()} Sanne DZ. Tous droits réservés.<br>
-        Ce message est généré automatiquement, merci de ne pas y répondre.
-      </div>
+        <div class="email-footer">
+          &copy; ${new Date().getFullYear()} Sanne Textile DZ. Tous droits réservés.<br>
+          Ce message est généré automatiquement, merci de ne pas y répondre.
+        </div>
     </div>
   </div>
 </body>
@@ -158,7 +159,7 @@ export class MailService {
   private async sendMail(to: string, subject: string, html: string) {
     try {
       const mailOptions = {
-        from: this.configService.get<string>('SMTP_FROM', '"Sanne DZ" <noreply@sanne.dz>'),
+        from: this.configService.get<string>('SMTP_FROM', '"Sanne Textile DZ" <mouadev3@gmail.com>'),
         to,
         subject,
         html,
@@ -173,9 +174,9 @@ export class MailService {
 
   // ===== VERIFICATION EMAIL =====
   async sendVerificationEmail(to: string, code: string) {
-    const title = 'Vérification de votre compte Sanne DZ';
+    const title = 'Vérification de votre compte Sanne Textile DZ';
     const content = `
-      <h1>Bienvenue sur Sanne DZ !</h1>
+      <h1>Bienvenue sur Sanne Textile DZ !</h1>
       <p>Merci de vous être inscrit. Pour activer votre compte, veuillez utiliser le code de vérification ci-dessous :</p>
       <div class="verification-code">${escapeHtml(code)}</div>
       <p>Ce code est valide pendant 1 minute. Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email.</p>
@@ -185,7 +186,7 @@ export class MailService {
 
   // ===== WELCOME EMAIL (after verification) =====
   async sendWelcomeEmail(to: string, name: string, role: 'CLIENT' | 'PARTNER') {
-    const title = 'Bienvenue sur Sanne DZ !';
+    const title = 'Bienvenue sur Sanne Textile DZ !';
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
     const roleText = role === 'PARTNER'
@@ -197,12 +198,12 @@ export class MailService {
 
     const content = `
       <h1>Bienvenue ${escapeHtml(name)} ! 🎉</h1>
-      <p>Votre email a été vérifié avec succès et votre compte Sanne DZ est maintenant actif.</p>
+      <p>Votre email a été vérifié avec succès et votre compte Sanne Textile DZ est maintenant actif.</p>
       <p>${roleText}</p>
       <div style="text-align: center;">
         <a href="${dashboardUrl}" class="btn">${btnText}</a>
       </div>
-      <p style="font-size: 14px; color: #9ca3af;">Merci de faire confiance à Sanne DZ !</p>
+      <p style="font-size: 14px; color: #9ca3af;">Merci de faire confiance à Sanne Textile DZ !</p>
     `;
     await this.sendMail(to, title, this.getBaseTemplate(content, title));
   }
@@ -215,7 +216,7 @@ export class MailService {
 
     const content = `
       <h1>Mot de passe oublié ?</h1>
-      <p>Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte Sanne DZ.</p>
+      <p>Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte Sanne Textile DZ.</p>
       <p>Vous pouvez réinitialiser votre mot de passe en cliquant sur le bouton ci-dessous :</p>
       <div style="text-align: center;">
         <a href="${resetUrl}" class="btn">Réinitialiser le mot de passe</a>
@@ -248,11 +249,11 @@ export class MailService {
 
   // ===== SECURITY ALERT (password changed from dashboard) =====
   async sendSecurityAlert(to: string, action: string) {
-    const title = 'Alerte de sécurité — Sanne DZ';
+    const title = 'Alerte de sécurité — Sanne Textile DZ';
 
     const content = `
       <h1>🔒 Alerte de sécurité</h1>
-      <p>Une action de sécurité a été effectuée sur votre compte Sanne DZ :</p>
+      <p>Une action de sécurité a été effectuée sur votre compte Sanne Textile DZ :</p>
       <div class="info-box">
         <p><strong>Action :</strong> ${escapeHtml(action)}</p>
         <p><strong>Date :</strong> ${new Date().toLocaleString('fr-DZ', { dateStyle: 'long', timeStyle: 'short' })}</p>
@@ -264,7 +265,7 @@ export class MailService {
 
   // ===== ACCOUNT SUSPENDED =====
   async sendAccountSuspended(to: string, businessName: string, reason?: string) {
-    const title = 'Compte suspendu — Sanne DZ';
+    const title = 'Compte suspendu — Sanne Textile DZ';
 
     const reasonHtml = reason
       ? `<div class="info-box"><p><strong>Raison :</strong> ${escapeHtml(reason)}</p></div>`
@@ -273,7 +274,7 @@ export class MailService {
     const content = `
       <h1>Compte Suspendu</h1>
       <p>Bonjour,</p>
-      <p>Nous vous informons que votre compte partenaire <strong>"${escapeHtml(businessName)}"</strong> a été suspendu par l'équipe Sanne DZ.</p>
+      <p>Nous vous informons que votre compte partenaire <strong>"${escapeHtml(businessName)}"</strong> a été suspendu par l'équipe Sanne Textile DZ.</p>
       ${reasonHtml}
       <p>Votre profil n'est plus visible sur la plateforme. Si vous pensez qu'il s'agit d'une erreur, veuillez nous contacter à <a href="mailto:mouadev3@gmail.com">mouadev3@gmail.com</a>.</p>
       <p><span class="status-badge status-warning">Suspendu</span></p>
@@ -283,12 +284,12 @@ export class MailService {
 
   // ===== ACCOUNT REACTIVATED =====
   async sendAccountReactivated(to: string, businessName: string) {
-    const title = 'Compte réactivé — Sanne DZ';
+    const title = 'Compte réactivé — Sanne Textile DZ';
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
     const content = `
       <h1>Compte Réactivé ! 🎉</h1>
-      <p>Bonne nouvelle ! Votre compte partenaire <strong>"${escapeHtml(businessName)}"</strong> a été réactivé par l'équipe Sanne DZ.</p>
+      <p>Bonne nouvelle ! Votre compte partenaire <strong>"${escapeHtml(businessName)}"</strong> a été réactivé par l'équipe Sanne Textile DZ.</p>
       <p>Votre profil est de nouveau visible sur la plateforme et les clients peuvent vous trouver.</p>
       <div style="text-align: center;">
         <a href="${frontendUrl}/dashboard/partner" class="btn">Accéder à mon dashboard</a>
@@ -300,28 +301,28 @@ export class MailService {
 
   // ===== ACCOUNT DELETED =====
   async sendAccountDeleted(to: string, name: string) {
-    const title = 'Compte supprimé — Sanne DZ';
+    const title = 'Compte supprimé — Sanne Textile DZ';
 
     const content = `
       <h1>Au revoir ${escapeHtml(name)} 😢</h1>
-      <p>Votre compte Sanne DZ a été supprimé conformément à votre demande (ou par décision administrative).</p>
+      <p>Votre compte Sanne Textile DZ a été supprimé conformément à votre demande (ou par décision administrative).</p>
       <p>Toutes vos données ont été définitivement supprimées de notre plateforme.</p>
       <div class="info-box">
         <p>Si vous souhaitez revenir, vous êtes toujours le/la bienvenu(e) ! Créez un nouveau compte à tout moment sur <a href="https://sanne.dz">sanne.dz</a>.</p>
       </div>
-      <p>Merci d'avoir fait partie de la communauté Sanne DZ.</p>
+      <p>Merci d'avoir fait partie de la communauté Sanne Textile DZ.</p>
     `;
     await this.sendMail(to, title, this.getBaseTemplate(content, title));
   }
 
   // ===== ACCOUNT BANNED =====
   async sendAccountBanned(to: string, name: string) {
-    const title = 'Compte désactivé — Sanne DZ';
+    const title = 'Compte désactivé — Sanne Textile DZ';
 
     const content = `
       <h1>Compte Désactivé</h1>
       <p>Bonjour ${escapeHtml(name)},</p>
-      <p>Votre compte Sanne DZ a été désactivé par l'équipe d'administration.</p>
+      <p>Votre compte Sanne Textile DZ a été désactivé par l'équipe d'administration.</p>
       <p>Vous ne pouvez plus accéder à la plateforme. Si vous pensez qu'il s'agit d'une erreur, veuillez nous contacter.</p>
       <div class="info-box">
         <p>📧 Contact : <a href="mailto:mouadev3@gmail.com">mouadev3@gmail.com</a></p>
@@ -334,8 +335,8 @@ export class MailService {
   // ===== PLAN CHANGED =====
   async sendPlanChanged(to: string, plan: 'PRO' | 'SIMPLE', businessName: string) {
     const title = plan === 'PRO'
-      ? 'Abonnement Pro Activé ! — Sanne DZ'
-      : 'Plan modifié — Sanne DZ';
+      ? 'Abonnement Pro Activé ! — Sanne Textile DZ'
+      : 'Plan modifié — Sanne Textile DZ';
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
@@ -370,14 +371,14 @@ export class MailService {
   // ===== REVIEW MODERATED =====
   async sendReviewModerated(to: string, status: 'APPROVED' | 'REJECTED', partnerName: string) {
     const title = status === 'APPROVED'
-      ? 'Votre avis a été approuvé — Sanne DZ'
-      : 'Votre avis a été rejeté — Sanne DZ';
+      ? 'Votre avis a été approuvé — Sanne Textile DZ'
+      : 'Votre avis a été rejeté — Sanne Textile DZ';
 
     const content = status === 'APPROVED' ? `
       <h1>Avis Approuvé ✅</h1>
       <p>Bonne nouvelle ! Votre avis sur <strong>"${escapeHtml(partnerName)}"</strong> a été examiné et approuvé par notre équipe de modération.</p>
       <p>Il est maintenant visible publiquement sur le profil du partenaire.</p>
-      <p>Merci pour votre contribution à la communauté Sanne DZ !</p>
+      <p>Merci pour votre contribution à la communauté Sanne Textile DZ !</p>
       <p><span class="status-badge status-success">Approuvé</span></p>
     ` : `
       <h1>Avis Rejeté</h1>
@@ -394,7 +395,7 @@ export class MailService {
 
   // ===== PARTNER REVIEW APPROVED (notify partner their review is now visible) =====
   async sendNewReviewApproved(to: string, businessName: string, rating: number) {
-    const title = 'Un nouvel avis est visible sur votre profil — Sanne DZ';
+    const title = 'Un nouvel avis est visible sur votre profil — Sanne Textile DZ';
     const stars = '⭐'.repeat(rating);
 
     const content = `
@@ -411,14 +412,14 @@ export class MailService {
   // ===== FEATURED STATUS CHANGED =====
   async sendFeaturedStatus(to: string, isFeatured: boolean, businessName: string) {
     const title = isFeatured
-      ? 'Vous êtes maintenant en vedette ! — Sanne DZ'
-      : 'Mise en avant retirée — Sanne DZ';
+      ? 'Vous êtes maintenant en vedette ! — Sanne Textile DZ'
+      : 'Mise en avant retirée — Sanne Textile DZ';
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
     const content = isFeatured ? `
       <h1>En Vedette ! ⭐</h1>
-      <p>Félicitations ! Votre profil <strong>"${escapeHtml(businessName)}"</strong> est maintenant mis en avant sur la page d'accueil de Sanne DZ.</p>
+      <p>Félicitations ! Votre profil <strong>"${escapeHtml(businessName)}"</strong> est maintenant mis en avant sur la page d'accueil de Sanne Textile DZ.</p>
       <p>Cela signifie une visibilité accrue et plus de clients potentiels qui vous découvrent.</p>
       <div style="text-align: center;">
         <a href="${frontendUrl}" class="btn">Voir la page d'accueil</a>
@@ -435,7 +436,7 @@ export class MailService {
 
   // ===== DELETION REQUEST CONFIRMATION =====
   async sendDeletionRequestConfirmation(to: string, businessName: string) {
-    const title = 'Demande de suppression reçue — Sanne DZ';
+    const title = 'Demande de suppression reçue — Sanne Textile DZ';
 
     const content = `
       <h1>Demande de suppression reçue</h1>
@@ -495,6 +496,42 @@ export class MailService {
       ${metadataHtml}
     `;
 
-    await this.sendMail(adminEmail, `[Admin Sanne DZ] ${subject}`, this.getBaseTemplate(content, 'Alerte Administrateur'));
+    await this.sendMail(adminEmail, `[Admin Sanne Textile DZ] ${subject}`, this.getBaseTemplate(content, 'Alerte Administrateur'));
+  }
+
+  // ===== ACCOUNT UNBLOCKED =====
+  async sendAccountUnbanned(to: string, name: string) {
+    const title = 'Compte réactivé — Sanne Textile DZ';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://textile-dz.tech';
+
+    const content = `
+      <h1>Compte Réactivé ✅</h1>
+      <p>Bonjour ${escapeHtml(name)},</p>
+      <p>Bonne nouvelle ! Votre compte Sanne Textile DZ a été réactivé par l'équipe d'administration.</p>
+      <p>Vous pouvez maintenant vous reconnecter et accéder à toutes les fonctionnalités de la plateforme.</p>
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${frontendUrl}/login" class="btn">Se connecter</a>
+      </div>
+      <p><span class="status-badge status-success">Compte actif</span></p>
+    `;
+    await this.sendMail(to, title, this.getBaseTemplate(content, title));
+  }
+
+  // ===== ADMIN PASSWORD OTP =====
+  async sendAdminPasswordOtp(to: string, otp: string) {
+    const title = 'Code de confirmation — Changement de mot de passe administrateur';
+
+    const content = `
+      <h1>🔐 Confirmation de changement de mot de passe</h1>
+      <p>Vous avez demandé à changer le mot de passe de votre compte administrateur Sanne Textile DZ.</p>
+      <p>Voici votre code de vérification (valide 10 minutes) :</p>
+      <div class="verification-code">${escapeHtml(otp)}</div>
+      <p>Si vous n'avez pas fait cette demande, ignorez cet email. Votre mot de passe reste inchangé.</p>
+      <div class="info-box">
+        <p>⚠️ <strong>Ne partagez jamais ce code</strong> avec quiconque. L'équipe Sanne Textile DZ ne vous demandera jamais votre code.</p>
+      </div>
+    `;
+    await this.sendMail(to, title, this.getBaseTemplate(content, title));
   }
 }
+

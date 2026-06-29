@@ -59,6 +59,7 @@ model Category {
   description   String?
   order         Int               @default(0)
   isActive      Boolean           @default(true)
+  isDefault     Boolean           @default(false)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   partners      PartnerCategory[]
@@ -121,6 +122,7 @@ model Partner {
   status              PartnerStatus     @default(PENDING)
   isPro               Boolean           @default(false)
   isFeatured          Boolean           @default(false)
+  requestedPro        Boolean           @default(false)
   rating              Float             @default(0)
   reviewCount         Int               @default(0)
   rejectionReason     String?

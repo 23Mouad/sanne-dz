@@ -148,6 +148,7 @@ export class AuthService {
     const otp = this.generateOtp();
     const otpExpires = new Date(Date.now() + 1 * 60 * 1000); // 1 min
 
+    // SECURITY: Create user as INACTIVE — only activated after OTP verification
     const user = await this.prisma.user.create({
       data: {
         email: normalizedEmail,
@@ -157,20 +158,18 @@ export class AuthService {
         password: hashed,
         role: UserRole.CLIENT,
         wilayaId: dto.wilayaId,
+        isActive: false, // Inactive until email verified
         emailVerifyToken: otp,
         emailVerifyExpires: otpExpires,
       },
       select: { id: true, email: true, firstName: true, lastName: true, role: true },
     });
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
-
     await this.mailService.sendVerificationEmail(user.email, otp);
 
     return {
-      ...tokens,
-      user,
+      message: 'Registration successful. Please verify your email to activate your account.',
+      email: user.email,
       ...(this.config.get('NODE_ENV') !== 'production' && { verificationCode: otp }),
     };
   }
@@ -215,6 +214,9 @@ export class AuthService {
     const slugExists = await this.prisma.partner.findUnique({ where: { slug } });
     if (slugExists) slug = `${slug}-${Date.now()}`;
 
+    // Detect if Pro plan was requested (client input only — actual Pro granted by admin)
+    const requestedPro = !!(dto as any).isPro;
+
     // SECURITY: Always force isPro = false — Pro status is only granted
     // through admin approval or paid subscription, never at registration.
     const user = await this.prisma.user.create({
@@ -226,6 +228,7 @@ export class AuthService {
         password: hashed,
         role: UserRole.PARTNER,
         wilayaId: dto.wilayaId,
+        isActive: false, // Inactive until email verified
         emailVerifyToken: otp,
         emailVerifyExpires: otpExpires,
         partner: {
@@ -234,6 +237,7 @@ export class AuthService {
             businessName: dto.businessName.trim(),
             description: dto.description,
             isPro: false, // HARDENED: always false, regardless of client input
+            requestedPro, // Flag that admin can see
             email: normalizedEmail,
             phone: normalizedPhone,
             whatsapp: normalizedWhatsapp,
@@ -251,23 +255,30 @@ export class AuthService {
       },
       select: {
         id: true, email: true, firstName: true, role: true,
-        partner: { select: { id: true, status: true, slug: true } },
+        partner: { select: { id: true, status: true, slug: true, requestedPro: true } },
       },
     });
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
-
     await this.mailService.sendVerificationEmail(user.email, otp);
-    await this.mailService.sendAdminNotification(
-      'Nouvelle demande de partenaire',
-      `Le partenaire "${dto.businessName}" vient de s'inscrire et attend votre validation.`,
-      { Email: normalizedEmail, Téléphone: normalizedPhone, WhatsApp: normalizedWhatsapp }
-    );
+
+    // Only send admin notification if Pro plan was requested
+    if (requestedPro) {
+      await this.mailService.sendAdminNotification(
+        'Nouvelle demande de partenaire PRO',
+        `Le partenaire "${dto.businessName}" vient de s'inscrire et a demandé le plan PRO. En attente de votre validation.`,
+        { Email: normalizedEmail, Téléphone: normalizedPhone, WhatsApp: normalizedWhatsapp, 'Plan demandé': 'PRO' }
+      );
+    } else {
+      await this.mailService.sendAdminNotification(
+        'Nouvelle demande de partenaire',
+        `Le partenaire "${dto.businessName}" vient de s'inscrire et attend votre validation.`,
+        { Email: normalizedEmail, Téléphone: normalizedPhone, WhatsApp: normalizedWhatsapp }
+      );
+    }
 
     return {
-      ...tokens,
-      user,
+      message: 'Registration successful. Please verify your email to activate your account.',
+      email: user.email,
       ...(this.config.get('NODE_ENV') !== 'production' && { verificationCode: otp }),
     };
   }
@@ -299,7 +310,12 @@ export class AuthService {
       );
     }
 
-    if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
+    // SECURITY: Check if email is verified before allowing login
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('Please verify your email address before logging in. Check your inbox for the verification code.');
+    }
+
+    if (!user.isActive) throw new UnauthorizedException('Account is deactivated. Please contact support.');
 
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) {
@@ -381,7 +397,12 @@ export class AuthService {
 
     const user = (await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
-    })) as UserWithSecurity | null;
+      include: {
+        partner: {
+          select: { id: true, status: true, isPro: true, slug: true, businessName: true },
+        },
+      },
+    })) as (UserWithSecurity & { partner: any }) | null;
 
     if (!user) throw new NotFoundException('User not found');
     if (user.isEmailVerified) throw new BadRequestException('Email already verified');
@@ -413,24 +434,42 @@ export class AuthService {
       throw new BadRequestException('Invalid verification code');
     }
 
+    // Activate account and mark email as verified
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         isEmailVerified: true,
+        isActive: true, // Activate the account
         emailVerifyToken: null,
         emailVerifyExpires: null,
         failedLoginAttempts: 0,
       } as any,
     });
 
+    // Send welcome email
     this.mailService.sendWelcomeEmail(
       user.email,
       user.firstName,
       user.role as 'CLIENT' | 'PARTNER',
     );
 
-    return { message: 'Email verified successfully' };
+    // Now issue tokens so the user can log in immediately after verification
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    await this.saveRefreshToken(user.id, tokens.refreshToken);
+
+    return {
+      message: 'Email verified successfully. Your account is now active.',
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        partner: user.partner,
+      },
+    };
   }
 
   // ===== RESEND VERIFICATION =====
@@ -574,7 +613,7 @@ export class AuthService {
         partner: {
           select: {
             id: true, slug: true, businessName: true, status: true,
-            isPro: true, logoUrl: true,
+            isPro: true, logoUrl: true, createdAt: true,
           },
         },
       },

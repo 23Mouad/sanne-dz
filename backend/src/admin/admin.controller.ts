@@ -1,11 +1,11 @@
-import { Controller, Get, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { IsOptional, IsString, IsNumber, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean, MinLength, Matches } from 'class-validator';
 
 // ===== DTOs (proper validation instead of `any`) =====
 export class RejectDto { @ApiProperty() @IsString() reason: string; }
@@ -22,6 +22,15 @@ export class UpdateSubscriptionConfigDto {
 
 export class UpdatePartnerPlanDto {
   @ApiProperty() @IsBoolean() isPro: boolean;
+}
+
+export class RequestPasswordOtpDto {
+  @ApiProperty() @IsString() newPassword: string;
+}
+
+export class ConfirmPasswordOtpDto {
+  @ApiProperty() @IsString() otp: string;
+  @ApiProperty() @IsString() newPassword: string;
 }
 
 @ApiTags('Admin')
@@ -58,10 +67,17 @@ export class AdminController {
 
   // Users
   @Get('users')
-  getUsers(@Query('search') search: string, @Query('page') page: number) { return this.adminService.getUsers(search, page); }
+  getUsers(
+    @Query('search') search: string,
+    @Query('page') page: number,
+    @Query('status') status: string,
+  ) { return this.adminService.getUsers(search, page, undefined, status); }
 
   @Put('users/:id/ban')
   banUser(@Param('id') id: string) { return this.adminService.banUser(id); }
+
+  @Put('users/:id/unban')
+  unbanUser(@Param('id') id: string) { return this.adminService.unbanUser(id); }
 
   @Delete('users/:id')
   deleteUser(@Param('id') id: string) { return this.adminService.deleteUser(id); }
@@ -105,4 +121,16 @@ export class AdminController {
     }
     return this.adminService.updateSettings(stringified);
   }
+
+  // Admin Password Change via OTP
+  @Post('password/request-otp')
+  requestPasswordOtp(@Request() req: any, @Body() dto: RequestPasswordOtpDto) {
+    return this.adminService.requestPasswordChangeOtp(req.user.sub, dto.newPassword);
+  }
+
+  @Put('password/confirm')
+  confirmPasswordChange(@Request() req: any, @Body() dto: ConfirmPasswordOtpDto) {
+    return this.adminService.confirmPasswordChange(req.user.sub, dto.otp);
+  }
 }
+

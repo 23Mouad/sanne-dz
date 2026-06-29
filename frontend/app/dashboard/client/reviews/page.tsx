@@ -23,7 +23,8 @@ export default function ClientReviewsPage() {
     setLoading(true)
     try {
       const res = await api.get('/reviews/me')
-      setReviews(res.data || [])
+      const payload = res.data?.data ?? res.data
+      setReviews(Array.isArray(payload) ? payload : [])
     } catch (err) {
       toast.error('Failed to load reviews')
     } finally {

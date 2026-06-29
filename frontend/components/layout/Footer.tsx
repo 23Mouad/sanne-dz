@@ -30,7 +30,7 @@ export default function Footer() {
               </div>
               <span className="text-2xl font-bold">
                 <span className="text-[#ec6fa1]">Sanne</span>
-                <span className="text-[#9490e7]">DZ</span>
+                <span className="text-[#9490e7]"> Textile DZ</span>
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
@@ -175,7 +175,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container-main py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-gray-500 text-sm">
-            &copy; {currentYear} Sanne DZ · {t(translations.footer.rights)}
+            &copy; {currentYear} Sanne Textile DZ · {t(translations.footer.rights)}
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-600">
             <Link href="/terms" className="hover:text-[#ec6fa1] transition-colors">

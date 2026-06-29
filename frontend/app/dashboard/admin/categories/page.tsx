@@ -337,10 +337,19 @@ export default function AdminCategoriesPage() {
                 
                 {!isCatEditing && (
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setEditing({ id: cat.slug, name: cat.name, icon: cat.icon, color: catColor })} title={t(d.editTitle)}
-                      className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg"><Pencil size={16}/></button>
-                    <button onClick={() => setModalDelete(cat.slug)} title={t(d.deleteTitleBtn)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+                    {(cat as any).isDefault ? (
+                      <span className="text-xs text-gray-400 px-2 py-1 bg-gray-50 rounded-lg flex items-center gap-1">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Protégée
+                      </span>
+                    ) : (
+                      <>
+                        <button onClick={() => setEditing({ id: cat.slug, name: cat.name, icon: cat.icon, color: catColor })} title={t(d.editTitle)}
+                          className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg"><Pencil size={16}/></button>
+                        <button onClick={() => setModalDelete(cat.slug)} title={t(d.deleteTitleBtn)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

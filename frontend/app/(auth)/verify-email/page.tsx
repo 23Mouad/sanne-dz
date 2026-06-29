@@ -60,24 +60,38 @@ function VerifyEmailContent() {
     }
     setLoading(true)
     try {
-      await AuthService.verifyEmail({ email, code });
+      const result = await AuthService.verifyEmail({ email, code });
       toast.success(t(d.successMsg));
-      
-      const userState = useAuthStore.getState().user;
-      const userRole = (userState?.role as string)?.toLowerCase() || 'client';
+
+      // verifyEmail now returns tokens + user — store them to activate the session
+      if (result?.accessToken) {
+        localStorage.setItem('access_token', result.accessToken);
+        document.cookie = `access_token=${result.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      }
+      if (result?.refreshToken) {
+        localStorage.setItem('refresh_token', result.refreshToken);
+      }
+
+      // Initialize auth store from stored token
+      await useAuthStore.getState().initialize();
+
+      const userRole = result?.user?.role?.toLowerCase() || useAuthStore.getState().user?.role || 'client';
       if (userRole === 'admin') {
         router.push('/dashboard/admin');
       } else if (userRole === 'partner') {
         router.push('/dashboard/partner');
       } else {
-        router.push('/dashboard/client');
+        router.push('/dashboard/client/profile');
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Code invalide ou expiré');
+      setOtp(['', '', '', '', '', '']);
+      inputs.current[0]?.focus();
     } finally {
       setLoading(false)
     }
   }
+
 
   const handleResend = async () => {
     if (!email || cooldown > 0) {

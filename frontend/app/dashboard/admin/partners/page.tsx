@@ -173,11 +173,16 @@ export default function AdminPartnersPage() {
                 <tr key={p.id} className={`transition-colors ${p.deletionRequestedAt ? 'bg-red-50/50 hover:bg-red-50/70' : 'hover:bg-pink-50/30'}`}>
                   <td className="px-4 py-3">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-gray-900">{p.businessName}</p>
                         {p.deletionRequestedAt && (
                           <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded uppercase tracking-wider">
                             Suppression Demandée
+                          </span>
+                        )}
+                        {(p as any).requestedPro && !p.isPro && (
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-0.5">
+                            <Sparkles size={9} /> Demande PRO
                           </span>
                         )}
                       </div>

@@ -29,21 +29,20 @@ export const AuthService = {
 
   registerClient: async (data: RegisterClientForm) => {
     const response = await api.post('/auth/register/client', data);
-    const result = response.data.data;
-    storeTokens(result);
-    return result;
+    // Registration no longer returns tokens — account must be verified via OTP first
+    return response.data.data ?? response.data;
   },
 
   registerPartner: async (data: RegisterPartnerForm) => {
     const response = await api.post('/auth/register/partner', data);
-    const result = response.data.data;
-    storeTokens(result);
-    return result;
+    // Registration no longer returns tokens — account must be verified via OTP first
+    return response.data.data ?? response.data;
   },
 
   verifyEmail: async (data: { email: string; code: string }) => {
     const response = await api.post('/auth/verify-email', data);
-    return response.data;
+    // Returns { accessToken, refreshToken, user } — caller stores tokens
+    return response.data?.data ?? response.data;
   },
 
   resendVerification: async (data: { email: string }) => {

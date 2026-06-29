@@ -1,158 +1,228 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Save, Globe, MapPin, Phone, MessageCircle } from 'lucide-react'
+import { useState } from 'react'
+import { Lock, Shield, Eye, EyeOff, CheckCircle, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
-import { useT } from '@/hooks/useT'
-import { translations } from '@/lib/i18n/translations'
-import { invalidateSettingsCache } from '@/hooks/useSettings'
 
 export default function AdminSettingsPage() {
-  const t = useT()
-  const d = translations.adminSettings
+  const [step, setStep] = useState<'password' | 'otp'>('password')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [otp, setOtp] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
 
-  const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({
-    facebook: 'https://facebook.com/sannedz',
-    instagram: 'https://instagram.com/sannedz',
-    tiktok: 'https://tiktok.com/@sannedz',
-    contactEmail: 'contact@sannedz.com',
-    contactPhone: '+213 555 000 000',
-    whatsapp: '+213 555 000 000',
-    address: 'Alger, Algérie',
-  })
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await api.get('/admin/settings')
-        if (res.data && Object.keys(res.data).length > 0) {
-          setForm(prev => ({ ...prev, ...res.data }))
-        }
-      } catch (err) {
-        console.error('Failed to load settings', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadSettings()
-  }, [])
-
-  const u = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }))
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaving(true)
+    if (!newPassword || newPassword.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas')
+      return
+    }
+
+    setLoading(true)
     try {
-      await api.put('/admin/settings', form)
-      invalidateSettingsCache() // force other components to reload settings
-      toast.success(t(d.successMsg))
-    } catch (err) {
-      toast.error('Failed to save settings')
+      await api.post('/admin/password/request-otp', { newPassword })
+      toast.success('Code OTP envoyé à votre adresse email !')
+      setStep('otp')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Erreur lors de l\'envoi du code'
+      toast.error(msg)
     } finally {
-      setSaving(false)
+      setLoading(false)
+    }
+  }
+
+  const handleConfirmOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otp || otp.length !== 6) {
+      toast.error('Veuillez entrer le code à 6 chiffres')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await api.put('/admin/password/confirm', { otp, newPassword })
+      toast.success('Mot de passe modifié avec succès !')
+      setDone(true)
+      // Reset form
+      setNewPassword('')
+      setConfirmPassword('')
+      setOtp('')
+      setStep('password')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Code OTP invalide ou expiré'
+      toast.error(msg)
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-lg">
       <div>
-        <h1 className="page-title">{t(d.title)}</h1>
-        <p className="page-subtitle">{t(d.sub)}</p>
+        <h1 className="page-title flex items-center gap-2">
+          <Shield size={28} className="text-[#C2517A]" />
+          Paramètres — Sécurité
+        </h1>
+        <p className="page-subtitle">Modifiez votre mot de passe administrateur de manière sécurisée via une vérification OTP</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Contact Info */}
-        <div className="card p-5">
-          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <MapPin size={16} className="text-[#C2517A]" />{t(d.contactInfo)}
-          </h2>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="form-group">
-                <label className="label">{t(d.address)}</label>
-                <div className="relative">
-                  <MapPin size={14} className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="text" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.address}
-                    onChange={e => u('address', e.target.value)} placeholder="Ex: Alger, Algérie" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="label">{t(d.phone)}</label>
-                <div className="relative">
-                  <Phone size={14} className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="tel" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.contactPhone}
-                    onChange={e => u('contactPhone', e.target.value)} placeholder="+213 ..." dir="ltr" />
-                </div>
-              </div>
+      {done && (
+        <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
+          <CheckCircle size={20} className="text-green-500 shrink-0" />
+          <p className="text-sm font-semibold text-green-800">Mot de passe modifié avec succès !</p>
+        </div>
+      )}
+
+      <div className="card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+              step === 'password' ? 'bg-[#C2517A] text-white' : 'bg-green-500 text-white'
+            }`}>
+              {step === 'otp' ? <CheckCircle size={14} /> : '1'}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="form-group">
-                <label className="label">{t(d.whatsapp)}</label>
-                <div className="relative">
-                  <MessageCircle size={14} className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="tel" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.whatsapp}
-                    onChange={e => u('whatsapp', e.target.value)} placeholder="+213 ..." dir="ltr" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="label">{t(d.email)}</label>
-                <div className="relative">
-                  <Globe size={14} className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="email" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.contactEmail}
-                    onChange={e => u('contactEmail', e.target.value)} dir="ltr" />
-                </div>
-              </div>
+            <span className={`text-sm font-medium ${step === 'password' ? 'text-gray-900' : 'text-gray-400'}`}>
+              Nouveau mot de passe
+            </span>
+          </div>
+          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+              step === 'otp' ? 'bg-[#C2517A] text-white' : 'bg-gray-200 text-gray-500'
+            }`}>
+              2
             </div>
+            <span className={`text-sm font-medium ${step === 'otp' ? 'text-gray-900' : 'text-gray-400'}`}>
+              Vérification OTP
+            </span>
           </div>
         </div>
 
-        {/* Social Links */}
-        <div className="card p-5">
-          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Globe size={16} className="text-[#C2517A]" />{t(d.socials)}
-          </h2>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="form-group">
-                <label className="label">{t(d.facebook)}</label>
-                <div className="relative">
-                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 320 512" className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400"><path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"/></svg>
-                  <input type="url" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.facebook}
-                    onChange={e => u('facebook', e.target.value)} placeholder="https://facebook.com/..." dir="ltr" />
-                </div>
+        {step === 'password' ? (
+          <form onSubmit={handleRequestOtp} className="space-y-4">
+            <div className="form-group">
+              <label className="label">Nouveau mot de passe</label>
+              <div className="relative">
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={8}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Minimum 8 caractères"
+                  className="input-field pl-9 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
-              <div className="form-group">
-                <label className="label">{t(d.instagram)}</label>
-                <div className="relative">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                  <input type="url" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.instagram}
-                    onChange={e => u('instagram', e.target.value)} placeholder="https://instagram.com/..." dir="ltr" />
-                </div>
-              </div>
+              <p className="text-xs text-gray-400 mt-1">Minimum 8 caractères, incluant majuscules, minuscules et chiffres</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="form-group">
-                <label className="label">{t(d.tiktok)}</label>
-                <div className="relative">
-                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 448 512" className="absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2 text-gray-400"><path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/></svg>
-                  <input type="url" className="input-field pl-9 rtl:pr-9 rtl:pl-4 text-sm" value={form.tiktok}
-                    onChange={e => u('tiktok', e.target.value)} placeholder="https://tiktok.com/@..." dir="ltr" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <button type="submit" disabled={saving} className="btn-primary py-3 w-full sm:w-auto">
-          {saving
-            ? <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{t(d.saving)}</span>
-            : <span className="flex items-center gap-2"><Save size={16} />{t(d.save)}</span>
-          }
-        </button>
-      </form>
+            <div className="form-group">
+              <label className="label">Confirmer le mot de passe</label>
+              <div className="relative">
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Répétez le mot de passe"
+                  className="input-field pl-9 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+              <p className="text-xs text-blue-700">
+                🔐 Un code de vérification à 6 chiffres sera envoyé à votre adresse email d&apos;administrateur pour confirmer ce changement.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+            >
+              {loading
+                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi en cours...</>
+                : <><Send size={16} /> Envoyer le code OTP</>
+              }
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleConfirmOtp} className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+              <p className="text-sm text-green-800 font-semibold mb-1">Code envoyé à votre email</p>
+              <p className="text-xs text-green-600">Vérifiez votre boîte de réception et entrez le code à 6 chiffres ci-dessous. Valide 10 minutes.</p>
+            </div>
+
+            <div className="form-group">
+              <label className="label text-center block">Code de vérification OTP</label>
+              <input
+                type="text"
+                required
+                maxLength={6}
+                pattern="[0-9]{6}"
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                className="input-field text-center text-2xl font-bold tracking-[0.5em] py-4"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep('password')}
+                className="flex-1 btn-ghost py-3"
+              >
+                Retour
+              </button>
+              <button
+                type="submit"
+                disabled={loading || otp.length !== 6}
+                className="flex-1 btn-primary py-3 flex items-center justify-center gap-2"
+              >
+                {loading
+                  ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Vérification...</>
+                  : <><CheckCircle size={16} /> Confirmer</>
+                }
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setStep('password')}
+              className="w-full text-xs text-gray-400 hover:text-[#C2517A] transition-colors mt-2"
+            >
+              Renvoyer un nouveau code
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   )
 }
