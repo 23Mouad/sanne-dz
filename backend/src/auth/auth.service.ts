@@ -232,6 +232,7 @@ export class AuthService {
         emailVerifyToken: otp,
         emailVerifyExpires: otpExpires,
         partner: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           create: {
             slug,
             businessName: dto.businessName.trim(),
@@ -250,12 +251,12 @@ export class AuthService {
               create: categories.map((c) => ({ categoryId: c.id })),
             },
             stats: { create: {} },
-          },
+          } as any,
         },
       },
       select: {
         id: true, email: true, firstName: true, role: true,
-        partner: { select: { id: true, status: true, slug: true, requestedPro: true } },
+        partner: { select: { id: true, status: true, slug: true } },
       },
     });
 
