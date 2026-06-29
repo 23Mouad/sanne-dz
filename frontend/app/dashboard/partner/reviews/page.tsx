@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Star, Flag, MessageSquare, Check, X } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getImageUrl } from '@/lib/utils'
+import Image from 'next/image'
 import StarRating from '@/components/ui/StarRating'
 import { useT } from '@/hooks/useT'
 import { translations } from '@/lib/i18n/translations'
@@ -15,22 +16,27 @@ export default function PartnerReviewsPage() {
 
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
+  const load = async (p = 1) => {
+    setLoading(true)
+    try {
+      await PartnersService.getMyProfile()
+      const res = await api.get(`/reviews/partner-dashboard?page=${p}`)
+      const payload = res.data
+      setReviews(payload?.data || [])
+      setTotalPages(payload?.meta?.totalPages || 1)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const p = await PartnersService.getMyProfile()
-        const res = await api.get('/reviews/partner-dashboard')
-        const payload = res.data
-        setReviews(Array.isArray(payload) ? payload : (payload?.data || []))
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
+    load(page)
+  }, [page])
 
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
 
@@ -90,8 +96,12 @@ export default function PartnerReviewsPage() {
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-100 to-purple-100
-                                  flex items-center justify-center text-[#C2517A] font-bold text-sm shrink-0">
-                    {r.author?.firstName?.[0] || '?'}
+                                  flex items-center justify-center text-[#C2517A] font-bold text-sm shrink-0 overflow-hidden relative">
+                    {r.author?.avatar ? (
+                      <Image src={getImageUrl(r.author.avatar)} alt={r.author?.firstName || 'Avatar'} width={36} height={36} className="object-cover w-full h-full absolute inset-0" unoptimized={true} />
+                    ) : (
+                      <>{r.author?.firstName?.[0] || '?'}</>
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-sm text-gray-900">{r.author?.firstName} {r.author?.lastName}</p>
@@ -124,6 +134,21 @@ export default function PartnerReviewsPage() {
           <Star size={40} className="mx-auto text-gray-200 mb-4" />
           <h3 className="text-lg font-bold text-gray-900 mb-2">{t(d.noReviewsTitle)}</h3>
           <p className="text-gray-500 text-sm">{t(d.noReviewsSub)}</p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+            className="px-3 py-1.5 text-sm rounded-xl border border-pink-100 disabled:opacity-40 hover:bg-pink-50 transition-colors">
+            ←
+          </button>
+          <span className="text-sm text-gray-500">Page {page} / {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
+            className="px-3 py-1.5 text-sm rounded-xl border border-pink-100 disabled:opacity-40 hover:bg-pink-50 transition-colors">
+            →
+          </button>
         </div>
       )}
     </div>

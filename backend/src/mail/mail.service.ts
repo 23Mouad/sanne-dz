@@ -30,14 +30,14 @@ export class MailService implements OnModuleInit {
    * comma-separated (e.g. "https://textile-dz.tech,https://www.textile-dz.tech").
    */
   private getFrontendUrl(): string {
-    const raw = this.getFrontendUrl();
+    const raw = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
     // Take only the first value if multiple are present
     return raw.split(',')[0].trim();
   }
 
   private getBaseTemplate(content: string, title: string): string {
-    const logoSrc = 'https://textile-dz.tech/logoMain.png';
     const frontendUrl = this.getFrontendUrl();
+    const logoSrc = `${frontendUrl}/logoMain.png`;
 
     return `
 <!DOCTYPE html>

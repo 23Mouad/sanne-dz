@@ -8,12 +8,13 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { AuthService } from '@/services/auth.service'
 import toast from 'react-hot-toast'
 import Modal from '@/components/ui/Modal'
-import { useT } from '@/hooks/useT'
+import { useT, useLang } from '@/hooks/useT'
 import { translations } from '@/lib/i18n/translations'
 import { getImageUrl } from '@/lib/utils'
 
 export default function ClientProfilePage() {
   const t = useT()
+  const lang = useLang()
   const d = translations.clientDashboard
 
   const { user, updateUser } = useAuthStore()
@@ -123,7 +124,7 @@ export default function ClientProfilePage() {
             <p className="text-sm text-[#C2517A]">{t(d.role)}</p>
             <p className="text-xs text-gray-400 mt-0.5">
               {user?.createdAt
-                ? `${t(d.memberSince)} ${new Date(user.createdAt as string).toLocaleDateString('fr-DZ', { year: 'numeric', month: 'long' })}`
+                ? `${t(d.memberSince)} ${new Date(user.createdAt as string).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-DZ', { year: 'numeric', month: 'long' })}`
                 : t(d.memberSince)
               }
             </p>

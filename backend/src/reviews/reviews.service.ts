@@ -162,17 +162,26 @@ export class ReviewsService {
     });
   }
 
-  async getPartnerDashboardReviews(userId: string) {
+  async getPartnerDashboardReviews(userId: string, page = 1, limit = 10) {
     const partner = await this.prisma.partner.findUnique({ where: { userId } });
     if (!partner) throw new NotFoundException('Partner not found');
     
-    return this.prisma.review.findMany({
-      where: { partnerId: partner.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: { select: { id: true, firstName: true, lastName: true, avatar: true } },
-      },
-    });
+    const skip = (page - 1) * limit;
+
+    const [reviews, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where: { partnerId: partner.id },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+        },
+      }),
+      this.prisma.review.count({ where: { partnerId: partner.id } }),
+    ]);
+
+    return { data: reviews, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   // ===== ADMIN =====

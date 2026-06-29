@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils'
 import { useT, useLang } from '@/hooks/useT'
 import { translations } from '@/lib/i18n/translations'
 import { NotificationsService, type Notification } from '@/services/notifications.service'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import toast from 'react-hot-toast'
 
 function getNotifIcon(type: string) {
@@ -32,6 +33,7 @@ export default function PartnerNotificationsPage() {
   const t = useT()
   const lang = useLang()
   const d = translations.clientNotifications
+  const { clearUnread, decrementUnread } = useNotificationStore()
 
   const [notifs, setNotifs] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,6 +63,7 @@ export default function PartnerNotificationsPage() {
     try {
       await NotificationsService.markRead(id)
       setNotifs(ns => ns.map(x => x.id === id ? { ...x, isRead: true } : x))
+      decrementUnread()
     } catch {
       // silent fail
     }
@@ -70,6 +73,7 @@ export default function PartnerNotificationsPage() {
     try {
       await NotificationsService.markAllRead()
       setNotifs(ns => ns.map(n => ({ ...n, isRead: true })))
+      clearUnread()
       toast.success('Toutes les notifications marquées comme lues')
     } catch {
       toast.error('Erreur')

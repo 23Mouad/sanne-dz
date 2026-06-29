@@ -75,8 +75,8 @@ export class ReviewsController {
   @Roles(UserRole.PARTNER)
   @ApiBearerAuth()
   @Get('partner-dashboard')
-  getPartnerDashboardReviews(@GetUser() user: { id: string }) {
-    return this.reviewsService.getPartnerDashboardReviews(user.id);
+  getPartnerDashboardReviews(@GetUser() user: { id: string }, @Query('page') page: string, @Query('limit') limit: string) {
+    return this.reviewsService.getPartnerDashboardReviews(user.id, page ? parseInt(page) : 1, limit ? parseInt(limit) : 10);
   }
 
   // ===== ADMIN =====

@@ -10,6 +10,7 @@ import {
   TrendingUp, Download, LogOut, Sparkles, Home, X
 } from 'lucide-react'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import { useRouter } from 'next/navigation'
 import { useT } from '@/hooks/useT'
 import { translations } from '@/lib/i18n/translations'
@@ -31,7 +32,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
   const s = translations.sidebar
 
   const [pendingCounts, setPendingCounts] = useState({ partners: 0, reviews: 0, payments: 0 })
-  const [unreadNotifs, setUnreadNotifs] = useState(0)
+  const { unreadCount: unreadNotifs, setUnreadCount: setUnreadNotifs } = useNotificationStore()
 
   const clientNav: NavItem[] = [
     { href: '/dashboard/client/favorites',     labelKey: s.nav.favorites,     icon: Heart },
@@ -69,14 +70,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
     } else if (user?.role === 'partner' || user?.role === 'client') {
       NotificationsService.getUnreadCount().then(setUnreadNotifs).catch(console.error)
     }
-  }, [user])
-
-  // Reset badge immediately when user marks all as read on the notifications page
-  useEffect(() => {
-    const handler = () => setUnreadNotifs(0)
-    window.addEventListener('notifs:all-read', handler)
-    return () => window.removeEventListener('notifs:all-read', handler)
-  }, [])
+  }, [user, setUnreadNotifs])
 
   const adminNav: NavItem[] = [
     { href: '/dashboard/admin',               labelKey: s.nav.globalView,      icon: LayoutDashboard },

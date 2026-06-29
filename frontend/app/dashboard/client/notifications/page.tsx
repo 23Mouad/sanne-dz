@@ -9,6 +9,7 @@ import { translations } from '@/lib/i18n/translations'
 import { useEffect } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { NotificationsService, type Notification } from '@/services/notifications.service'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import toast from 'react-hot-toast'
 
 function getNotifIcon(type: string) {
@@ -34,6 +35,7 @@ function getNotifColor(type: string): string {
 export default function ClientNotificationsPage() {
   const t = useT()
   const d = translations.clientNotifications
+  const { clearUnread, decrementUnread } = useNotificationStore()
 
   const [notifs, setNotifs] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,10 +65,7 @@ export default function ClientNotificationsPage() {
     try {
       await NotificationsService.markAllRead()
       setNotifs(ns => ns.map(n => ({ ...n, isRead: true })))
-      // Dispatch a global event so the sidebar badge resets immediately
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('notifs:all-read'))
-      }
+      clearUnread()
     } catch {
       toast.error('Erreur')
     }
@@ -76,6 +75,7 @@ export default function ClientNotificationsPage() {
     try {
       await NotificationsService.markRead(id)
       setNotifs(ns => ns.map(n => n.id === id ? { ...n, isRead: true } : n))
+      decrementUnread()
     } catch {
       // silent fail
     }

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Star, Flag, ThumbsUp } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getImageUrl } from '@/lib/utils'
+import Image from 'next/image'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import StarRating from '@/components/ui/StarRating'
@@ -85,8 +86,10 @@ export default function PartnerReviews({ partnerId, rating, reviewCount }: Partn
     try {
       if (myReview) {
         await api.put(`/reviews/${myReview.id}`, { rating: newRating, comment: newComment })
+        setMyReview({ ...myReview, rating: newRating, comment: newComment, status: 'PENDING' })
       } else {
         await api.post('/reviews', { partnerId, rating: newRating, comment: newComment })
+        setMyReview({ id: 'temp', rating: newRating, comment: newComment, status: 'PENDING' })
       }
       setSubmitted(true)
       setTimeout(() => { 
@@ -95,7 +98,6 @@ export default function PartnerReviews({ partnerId, rating, reviewCount }: Partn
         setNewRating(0); 
         setNewComment('');
         loadReviews();
-        window.location.reload(); // Force page refresh to update overall rating
       }, 2000)
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Échec de la soumission de l\'avis'
@@ -168,8 +170,12 @@ export default function PartnerReviews({ partnerId, rating, reviewCount }: Partn
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C2517A]/20 to-[#7F77DD]/20
-                                  flex items-center justify-center text-[#C2517A] font-bold text-sm shrink-0">
-                    {review.author?.firstName?.[0] || 'A'}
+                                  flex items-center justify-center text-[#C2517A] font-bold text-sm shrink-0 overflow-hidden relative">
+                    {review.author?.avatar ? (
+                      <Image src={getImageUrl(review.author.avatar)} alt={review.author?.firstName || 'Avatar'} width={36} height={36} className="object-cover w-full h-full absolute inset-0" unoptimized={true} />
+                    ) : (
+                      <>{review.author?.firstName?.[0] || 'A'}</>
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{review.author?.firstName} {review.author?.lastName}</p>

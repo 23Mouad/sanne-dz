@@ -685,7 +685,7 @@ export const translations = {
     profileTitle:     { fr: 'Mon profil',                            ar: 'ملفي الشخصي' },
     profileSub:       { fr: 'Gérez vos informations personnelles',   ar: 'أدِر معلوماتك الشخصية' },
     role:             { fr: 'Client Sanne DZ',                       ar: 'عميل Sanne DZ' },
-    memberSince:      { fr: 'Membre depuis ',            ar: 'عضو منذ جانفي 2025' },
+    memberSince:      { fr: 'Membre depuis ',            ar: 'عضو منذ ' },
     personalInfo:     { fr: 'Informations personnelles',             ar: 'المعلومات الشخصية' },
     firstName:        { fr: 'Prénom',                                ar: 'الاسم' },
     lastName:         { fr: 'Nom',                                   ar: 'اللقب' },
