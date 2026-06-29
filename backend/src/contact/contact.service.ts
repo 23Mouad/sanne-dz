@@ -23,7 +23,7 @@ export class ContactService {
     
     // Notify mouadev3 directly
     this.mailService.sendNotificationEmail(
-      'mouadev3@mail.com',
+      'mouadev3@gmail.com',
       'Nouveau message de contact',
       `Vous avez reçu un nouveau message de contact depuis le site.\n\nNom: ${dto.name}\nEmail: ${dto.email}\nSujet: ${dto.subject}\nMessage: ${dto.message}`
     );
