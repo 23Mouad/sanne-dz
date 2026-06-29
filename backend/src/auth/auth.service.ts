@@ -404,7 +404,6 @@ export class AuthService {
                 businessName: pending.dto.businessName.trim(),
                 description: pending.dto.description,
                 isPro: false,
-                requestedPro: pending.requestedPro,
                 email: pending.dto.email,
                 phone: pending.dto.phone,
                 whatsapp: pending.dto.whatsapp,
@@ -460,7 +459,7 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          partner: user.partner,
+          partner: (user as any).partner,
         },
       };
     }
