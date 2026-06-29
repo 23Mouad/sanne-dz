@@ -165,8 +165,12 @@ export class AdminService {
     const partner = await this.prisma.partner.findUnique({ where: { id: partnerId }, include: { user: true } });
     if (!partner) throw new NotFoundException('Partner not found');
 
-    // Send goodbye email BEFORE deletion
-    await this.mailService.sendAccountDeleted(partner.user.email, partner.businessName);
+    // Send goodbye email BEFORE deletion (do not block if it fails)
+    try {
+      await this.mailService.sendAccountDeleted(partner.user.email, partner.businessName);
+    } catch (e) {
+      console.error('Failed to send account deleted email:', e);
+    }
 
     await this.prisma.user.delete({ where: { id: partner.userId } });
     return { message: 'Partner account completely deleted' };
@@ -223,7 +227,11 @@ export class AdminService {
     if (!user) throw new NotFoundException('User not found');
 
     // Send goodbye email BEFORE deletion
-    await this.mailService.sendAccountDeleted(user.email, user.firstName);
+    try {
+      await this.mailService.sendAccountDeleted(user.email, user.firstName);
+    } catch (e) {
+      console.error('Failed to send account deleted email:', e);
+    }
 
     await this.prisma.user.delete({ where: { id: userId } });
     return { message: 'User deleted' };

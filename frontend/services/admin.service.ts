@@ -30,6 +30,11 @@ export const AdminService = {
     return response.data;
   },
 
+  reactivatePartner: async (id: string) => {
+    const response = await api.put(`/admin/partners/${id}/reactivate`);
+    return response.data;
+  },
+
   deletePartner: async (id: string) => {
     const response = await api.delete(`/admin/partners/${id}`);
     return response.data;

@@ -45,7 +45,7 @@ export default function AdminClientsPage() {
     load(filterStatus)
   }, [filterStatus])
 
-  const filtered = clients.filter(c => {
+  const filtered = (Array.isArray(clients) ? clients : []).filter(c => {
     const wilayaName = typeof c.wilaya === 'string' ? c.wilaya : (c.wilaya?.name || '')
     return !search ||
       `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase().includes(search.toLowerCase()) ||

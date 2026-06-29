@@ -13,7 +13,7 @@ export class FavoritesService {
         partner: {
           select: {
             id: true, slug: true, businessName: true, logoUrl: true, coverUrl: true, wilaya: { select: { name: true } },
-            rating: true, reviewCount: true, isPro: true,
+            rating: true, reviewCount: true, isPro: true, phone: true, whatsapp: true,
             categories: { include: { category: { select: { name: true, icon: true } } } },
           },
         },

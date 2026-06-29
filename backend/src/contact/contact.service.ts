@@ -21,16 +21,11 @@ export class ContactService {
   async submit(dto: CreateContactDto) {
     await this.prisma.contactMessage.create({ data: dto });
     
-    // Notify admin
-    this.mailService.sendAdminNotification(
+    // Notify mouadev3 directly
+    this.mailService.sendNotificationEmail(
+      'mouadev3@mail.com',
       'Nouveau message de contact',
-      `Vous avez reçu un nouveau message de contact depuis le site.`,
-      {
-        Nom: dto.name,
-        Email: dto.email,
-        Sujet: dto.subject,
-        Message: dto.message,
-      }
+      `Vous avez reçu un nouveau message de contact depuis le site.\n\nNom: ${dto.name}\nEmail: ${dto.email}\nSujet: ${dto.subject}\nMessage: ${dto.message}`
     );
 
     return { message: 'Your message has been received. We will get back to you soon.' };

@@ -89,6 +89,16 @@ export default function AdminPartnersPage() {
     }
   }
 
+  const reactivate = async (id: string) => {
+    try {
+      await AdminService.reactivatePartner(id)
+      setPartners(ps => ps.map(p => p.id === id ? { ...p, status: 'ACTIVE' } : p))
+      toast.success('Partenaire réactivé avec succès')
+    } catch (err) {
+      toast.error('Échec de la réactivation')
+    }
+  }
+
   const deletePartner = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement ce partenaire ? Cette action est irréversible.')) return;
     try {
@@ -245,8 +255,16 @@ export default function AdminPartnersPage() {
                         )}
                         {p.status !== 'SUSPENDED' && p.status !== 'REJECTED' && (
                           <button onClick={() => setModalSuspendId(p.id)}
-                            className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
+                            className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                            title="Suspendre">
                             <XCircle size={14} />
+                          </button>
+                        )}
+                        {p.status === 'SUSPENDED' && (
+                          <button onClick={() => reactivate(p.id)}
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Réactiver">
+                            <CheckCircle size={14} />
                           </button>
                         )}
                         <button onClick={() => deletePartner(p.id)}
