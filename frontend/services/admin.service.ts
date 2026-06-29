@@ -20,8 +20,13 @@ export const AdminService = {
     return response.data;
   },
 
-  rejectPartner: async (id: string) => {
-    const response = await api.put(`/admin/partners/${id}/reject`);
+  rejectPartner: async (id: string, reason = 'Non spécifié') => {
+    const response = await api.put(`/admin/partners/${id}/reject`, { reason });
+    return response.data;
+  },
+
+  suspendPartner: async (id: string, reason?: string) => {
+    const response = await api.put(`/admin/partners/${id}/suspend`, { reason });
     return response.data;
   },
 

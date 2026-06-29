@@ -81,10 +81,7 @@ export default function AdminPartnersPage() {
   }
   const suspend = async (id: string) => {
     try {
-      // Backend expects a body for reject/suspend usually, wait I need to check AdminService.
-      // Assuming AdminService has rejectPartner / suspendPartner. 
-      // Actually `suspendPartner` wasn't added to AdminService, let me use rejectPartner for now.
-      await AdminService.rejectPartner(id)
+      await AdminService.suspendPartner(id)
       setPartners(ps => ps.map(p => p.id === id ? { ...p, status: 'SUSPENDED' } : p))
       toast.error(t(d.suspendedMsg))
     } catch (err) {

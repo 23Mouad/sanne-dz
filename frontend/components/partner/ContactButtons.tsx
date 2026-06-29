@@ -4,15 +4,18 @@ import { useState, useEffect } from 'react'
 import { MessageCircle, Phone, Share2, Heart } from 'lucide-react'
 import { buildWhatsAppLink } from '@/lib/utils'
 import { useFavoritesStore } from '@/store/useFavoritesStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import type { Partner } from '@/types'
 import { useT } from '@/hooks/useT'
 import { translations } from '@/lib/i18n/translations'
 import api from '@/lib/api'
+import toast from 'react-hot-toast'
 
 export default function ContactButtons({ partner }: { partner: Partner }) {
   const t = useT()
   const d = translations.contactButtons
   const { toggleFavorite, isFavorite } = useFavoritesStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -24,6 +27,29 @@ export default function ContactButtons({ partner }: { partner: Partner }) {
       await navigator.share({ title: partner.businessName, url: window.location.href })
     } else {
       navigator.clipboard.writeText(window.location.href)
+    }
+  }
+
+  const handleFavoriteClick = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error('Vous devez être connecté pour ajouter aux favoris')
+      return
+    }
+    const currentlyFav = isFavorite(partner.id)
+    toggleFavorite(partner.id) // Optimistic update
+    
+    try {
+      if (currentlyFav) {
+        await api.delete(`/favorites/${partner.id}`)
+        toast.success('Retiré des favoris')
+      } else {
+        await api.post(`/favorites/${partner.id}`)
+        toast.success('Ajouté aux favoris')
+      }
+    } catch (err) {
+      // Revert on error
+      toggleFavorite(partner.id)
+      toast.error('Erreur lors de la mise à jour des favoris')
     }
   }
 
@@ -60,7 +86,7 @@ export default function ContactButtons({ partner }: { partner: Partner }) {
 
         <div className="flex gap-2">
           <button
-            onClick={() => toggleFavorite(partner.id)}
+            onClick={handleFavoriteClick}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium
                         border transition-all duration-200
                         ${fav
@@ -107,7 +133,7 @@ export default function ContactButtons({ partner }: { partner: Partner }) {
           {t(d.callMobile)}
         </a>
         <button
-          onClick={() => toggleFavorite(partner.id)}
+          onClick={handleFavoriteClick}
           className={`px-4 py-3 rounded-xl border transition-all ${
             fav ? 'border-[#C2517A] bg-pink-50 text-[#C2517A]' : 'border-gray-200 text-gray-400'
           }`}

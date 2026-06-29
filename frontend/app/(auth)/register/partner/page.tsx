@@ -98,13 +98,8 @@ export default function RegisterPartnerPage() {
       
       const res = await AuthService.registerPartner(payload);
 
-      if (res.accessToken) {
-        localStorage.setItem('access_token', res.accessToken);
-        localStorage.setItem('refresh_token', res.refreshToken);
-        await useAuthStore.getState().initialize();
+      if (res.message || res.email) {
         toast.success(t(d.partnerSuccess));
-        
-        const userState = useAuthStore.getState().user;
         router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
       }
     } catch (error: any) {

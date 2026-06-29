@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Lock, ArrowLeft, ArrowRight, Eye, EyeOff, CheckCircle, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -24,6 +24,12 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+
+  // Fix: clear any stale token so redirecting to /login doesn't autologin to admin
+  useEffect(() => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+  }, [])
 
   const ArrowIcon = lang === 'ar' ? ArrowRight : ArrowLeft
 

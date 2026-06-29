@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { useT, useLang } from '@/hooks/useT'
 import { translations } from '@/lib/i18n/translations'
 import { useSettings } from '@/hooks/useSettings'
+import api from '@/lib/api'
 
 export default function ContactClient() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -21,10 +22,21 @@ export default function ContactClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSending(true)
-    await new Promise(r => setTimeout(r, 1200))
-    toast.success(t(translations.contact.successToast))
-    setFormData({ name: '', email: '', subject: '', otherSubject: '', message: '' })
-    setSending(false)
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject === subjects[4] ? formData.otherSubject : formData.subject,
+        message: formData.message
+      }
+      await api.post('/contact', payload)
+      toast.success(t(translations.contact.successToast))
+      setFormData({ name: '', email: '', subject: '', otherSubject: '', message: '' })
+    } catch (err) {
+      toast.error('Une erreur est survenue. Veuillez réessayer plus tard.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (

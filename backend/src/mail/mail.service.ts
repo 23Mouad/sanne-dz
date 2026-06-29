@@ -1,18 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import * as fs from 'fs';
+import * as path from 'path';
 import { escapeHtml } from '../common/utils/sanitize.util';
 
 @Injectable()
-export class MailService {
+export class MailService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(MailService.name);
+  private logoDataUri = ''; // base64 logo, loaded once at startup
 
   constructor(private configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('SMTP_HOST'),
       port: this.configService.get<number>('SMTP_PORT'),
-      secure: false, // true for 465, false for other ports
+      secure: false,
       auth: {
         user: this.configService.get<string>('SMTP_USER'),
         pass: this.configService.get<string>('SMTP_PASS'),
@@ -20,10 +23,21 @@ export class MailService {
     });
   }
 
+  onModuleInit() {}
+
+  /**
+   * Returns a clean, single frontend URL — guards against FRONTEND_URL being
+   * comma-separated (e.g. "https://textile-dz.tech,https://www.textile-dz.tech").
+   */
+  private getFrontendUrl(): string {
+    const raw = this.getFrontendUrl();
+    // Take only the first value if multiple are present
+    return raw.split(',')[0].trim();
+  }
+
   private getBaseTemplate(content: string, title: string): string {
-    // Use absolute production logo URL so it renders in email clients
-    const logoUrl = 'https://textile-dz.tech/logoMain.png';
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://textile-dz.tech';
+    const logoSrc = 'https://textile-dz.tech/logoMain.png';
+    const frontendUrl = this.getFrontendUrl();
 
     return `
 <!DOCTYPE html>
@@ -140,7 +154,7 @@ export class MailService {
   <div class="email-wrapper">
     <div class="email-container">
       <div class="email-header">
-        <img src="${logoUrl}" alt="Sanne Textile DZ Logo">
+        <img src="${logoSrc}" alt="Sanne Textile DZ Logo">
       </div>
       <div class="email-body">
         ${content}
@@ -187,7 +201,7 @@ export class MailService {
   // ===== WELCOME EMAIL (after verification) =====
   async sendWelcomeEmail(to: string, name: string, role: 'CLIENT' | 'PARTNER') {
     const title = 'Bienvenue sur Sanne Textile DZ !';
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
 
     const roleText = role === 'PARTNER'
       ? 'En tant que partenaire, votre profil sera visible à des milliers de clients potentiels dans toute l\'Algérie.'
@@ -211,7 +225,7 @@ export class MailService {
   // ===== FORGOT PASSWORD =====
   async sendForgotPasswordEmail(to: string, token: string) {
     const title = 'Réinitialisation de votre mot de passe';
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
     const content = `
@@ -231,7 +245,7 @@ export class MailService {
   // ===== PASSWORD RESET CONFIRMATION =====
   async sendPasswordResetConfirmation(to: string) {
     const title = 'Mot de passe réinitialisé avec succès';
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
 
     const content = `
       <h1>Mot de passe modifié ✅</h1>
@@ -285,7 +299,7 @@ export class MailService {
   // ===== ACCOUNT REACTIVATED =====
   async sendAccountReactivated(to: string, businessName: string) {
     const title = 'Compte réactivé — Sanne Textile DZ';
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
 
     const content = `
       <h1>Compte Réactivé ! 🎉</h1>
@@ -338,7 +352,7 @@ export class MailService {
       ? 'Abonnement Pro Activé ! — Sanne Textile DZ'
       : 'Plan modifié — Sanne Textile DZ';
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
 
     const planContent = plan === 'PRO' ? `
       <h1>Plan Pro Activé ! 🌟</h1>
@@ -415,7 +429,7 @@ export class MailService {
       ? 'Vous êtes maintenant en vedette ! — Sanne Textile DZ'
       : 'Mise en avant retirée — Sanne Textile DZ';
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
 
     const content = isFeatured ? `
       <h1>En Vedette ! ⭐</h1>
@@ -452,7 +466,7 @@ export class MailService {
 
   // ===== GENERIC NOTIFICATION EMAIL =====
   async sendNotificationEmail(to: string, title: string, message: string, link?: string) {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.getFrontendUrl();
     let buttonHtml = '';
     
     if (link) {
@@ -502,7 +516,7 @@ export class MailService {
   // ===== ACCOUNT UNBLOCKED =====
   async sendAccountUnbanned(to: string, name: string) {
     const title = 'Compte réactivé — Sanne Textile DZ';
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://textile-dz.tech';
+    const frontendUrl = this.getFrontendUrl();
 
     const content = `
       <h1>Compte Réactivé ✅</h1>

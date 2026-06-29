@@ -57,8 +57,21 @@ interface UserWithPartner extends UserWithSecurity {
   } | null;
 }
 
+interface PendingRegistration {
+  type: 'CLIENT' | 'PARTNER';
+  otp: string;
+  expires: Date;
+  hashedPassword?: string;
+  dto: any;
+  categories?: any[];
+  slug?: string;
+  requestedPro?: boolean;
+}
+
 @Injectable()
 export class AuthService {
+  private pendingRegistrations = new Map<string, PendingRegistration>();
+
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
@@ -148,28 +161,21 @@ export class AuthService {
     const otp = this.generateOtp();
     const otpExpires = new Date(Date.now() + 1 * 60 * 1000); // 1 min
 
-    // SECURITY: Create user as INACTIVE — only activated after OTP verification
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        phone: normalizedPhone,
-        firstName: dto.firstName.trim(),
-        lastName: dto.lastName.trim(),
-        password: hashed,
-        role: UserRole.CLIENT,
-        wilayaId: dto.wilayaId,
-        isActive: false, // Inactive until email verified
-        emailVerifyToken: otp,
-        emailVerifyExpires: otpExpires,
-      },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+    // SECURITY: Store pending registration in memory until OTP is verified.
+    // Do NOT create the user in the database yet to avoid database pollution.
+    this.pendingRegistrations.set(normalizedEmail, {
+      type: 'CLIENT',
+      otp,
+      expires: otpExpires,
+      hashedPassword: hashed,
+      dto: { ...dto, email: normalizedEmail, phone: normalizedPhone }
     });
 
-    await this.mailService.sendVerificationEmail(user.email, otp);
+    await this.mailService.sendVerificationEmail(normalizedEmail, otp);
 
     return {
       message: 'Registration successful. Please verify your email to activate your account.',
-      email: user.email,
+      email: normalizedEmail,
       ...(this.config.get('NODE_ENV') !== 'production' && { verificationCode: otp }),
     };
   }
@@ -217,69 +223,23 @@ export class AuthService {
     // Detect if Pro plan was requested (client input only — actual Pro granted by admin)
     const requestedPro = !!(dto as any).isPro;
 
-    // SECURITY: Always force isPro = false — Pro status is only granted
-    // through admin approval or paid subscription, never at registration.
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        phone: normalizedPhone,
-        firstName: dto.businessName.trim(),
-        lastName: '',
-        password: hashed,
-        role: UserRole.PARTNER,
-        wilayaId: dto.wilayaId,
-        isActive: false, // Inactive until email verified
-        emailVerifyToken: otp,
-        emailVerifyExpires: otpExpires,
-        partner: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          create: {
-            slug,
-            businessName: dto.businessName.trim(),
-            description: dto.description,
-            isPro: false, // HARDENED: always false, regardless of client input
-            requestedPro, // Flag that admin can see
-            email: normalizedEmail,
-            phone: normalizedPhone,
-            whatsapp: normalizedWhatsapp,
-            wilayaId: dto.wilayaId,
-            address: dto.address,
-            mapLink: dto.mapLink,
-            deliveryType: dto.deliveryType,
-            registreCommerce: dto.registreCommerce,
-            categories: {
-              create: categories.map((c) => ({ categoryId: c.id })),
-            },
-            stats: { create: {} },
-          } as any,
-        },
-      },
-      select: {
-        id: true, email: true, firstName: true, role: true,
-        partner: { select: { id: true, status: true, slug: true } },
-      },
+    // SECURITY: Store pending registration in memory until OTP is verified.
+    this.pendingRegistrations.set(normalizedEmail, {
+      type: 'PARTNER',
+      otp,
+      expires: otpExpires,
+      hashedPassword: hashed,
+      dto: { ...dto, email: normalizedEmail, phone: normalizedPhone, whatsapp: normalizedWhatsapp },
+      categories: categories.map(c => ({ categoryId: c.id })),
+      slug,
+      requestedPro,
     });
 
-    await this.mailService.sendVerificationEmail(user.email, otp);
-
-    // Only send admin notification if Pro plan was requested
-    if (requestedPro) {
-      await this.mailService.sendAdminNotification(
-        'Nouvelle demande de partenaire PRO',
-        `Le partenaire "${dto.businessName}" vient de s'inscrire et a demandé le plan PRO. En attente de votre validation.`,
-        { Email: normalizedEmail, Téléphone: normalizedPhone, WhatsApp: normalizedWhatsapp, 'Plan demandé': 'PRO' }
-      );
-    } else {
-      await this.mailService.sendAdminNotification(
-        'Nouvelle demande de partenaire',
-        `Le partenaire "${dto.businessName}" vient de s'inscrire et attend votre validation.`,
-        { Email: normalizedEmail, Téléphone: normalizedPhone, WhatsApp: normalizedWhatsapp }
-      );
-    }
+    await this.mailService.sendVerificationEmail(normalizedEmail, otp);
 
     return {
       message: 'Registration successful. Please verify your email to activate your account.',
-      email: user.email,
+      email: normalizedEmail,
       ...(this.config.get('NODE_ENV') !== 'production' && { verificationCode: otp }),
     };
   }
@@ -396,7 +356,117 @@ export class AuthService {
   async verifyEmail(dto: VerifyEmailDto) {
     const normalizedEmail = dto.email.toLowerCase().trim();
 
-    const user = (await this.prisma.user.findUnique({
+    // 1. Check in-memory pending registrations first
+    if (this.pendingRegistrations.has(normalizedEmail)) {
+      const pending = this.pendingRegistrations.get(normalizedEmail)!;
+      
+      if (pending.expires && new Date() > pending.expires) {
+        this.pendingRegistrations.delete(normalizedEmail);
+        throw new BadRequestException('Verification code expired. Please request a new one.');
+      }
+      
+      if (!this.safeCompareOtp(dto.code, pending.otp)) {
+        throw new BadRequestException('Invalid verification code');
+      }
+
+      // OTP is valid! Create the user in the database now.
+      let user;
+      if (pending.type === 'CLIENT') {
+        user = await this.prisma.user.create({
+          data: {
+            email: pending.dto.email,
+            phone: pending.dto.phone,
+            firstName: pending.dto.firstName.trim(),
+            lastName: pending.dto.lastName.trim(),
+            password: pending.hashedPassword!,
+            role: UserRole.CLIENT,
+            wilayaId: pending.dto.wilayaId,
+            isActive: true, // Now fully active
+            isEmailVerified: true,
+          },
+          include: { partner: true },
+        });
+      } else {
+        user = await this.prisma.user.create({
+          data: {
+            email: pending.dto.email,
+            phone: pending.dto.phone,
+            firstName: pending.dto.businessName.trim(),
+            lastName: '',
+            password: pending.hashedPassword!,
+            role: UserRole.PARTNER,
+            wilayaId: pending.dto.wilayaId,
+            isActive: true, // Now fully active
+            isEmailVerified: true,
+            partner: {
+              create: {
+                slug: pending.slug!,
+                businessName: pending.dto.businessName.trim(),
+                description: pending.dto.description,
+                isPro: false,
+                requestedPro: pending.requestedPro,
+                email: pending.dto.email,
+                phone: pending.dto.phone,
+                whatsapp: pending.dto.whatsapp,
+                wilayaId: pending.dto.wilayaId,
+                address: pending.dto.address,
+                mapLink: pending.dto.mapLink,
+                deliveryType: pending.dto.deliveryType,
+                registreCommerce: pending.dto.registreCommerce,
+                categories: {
+                  create: pending.categories,
+                },
+                stats: { create: {} },
+              },
+            },
+          },
+          include: { partner: true },
+        });
+      }
+
+      // Remove from pending
+      this.pendingRegistrations.delete(normalizedEmail);
+
+      // Send welcome email
+      this.mailService.sendWelcomeEmail(user.email, user.firstName, user.role as 'CLIENT' | 'PARTNER');
+
+      // Send admin notification if partner
+      if (pending.type === 'PARTNER') {
+        if (pending.requestedPro) {
+          await this.mailService.sendAdminNotification(
+            'Nouvelle demande de partenaire PRO',
+            `Le partenaire "${pending.dto.businessName}" vient de s'inscrire et a demandé le plan PRO. En attente de votre validation.`,
+            { Email: user.email, Téléphone: user.phone, WhatsApp: pending.dto.whatsapp, 'Plan demandé': 'PRO' }
+          );
+        } else {
+          await this.mailService.sendAdminNotification(
+            'Nouvelle demande de partenaire',
+            `Le partenaire "${pending.dto.businessName}" vient de s'inscrire et attend votre validation.`,
+            { Email: user.email, Téléphone: user.phone, WhatsApp: pending.dto.whatsapp }
+          );
+        }
+      }
+
+      // Issue tokens
+      const tokens = await this.generateTokens(user.id, user.email, user.role);
+      await this.saveRefreshToken(user.id, tokens.refreshToken);
+
+      return {
+        message: 'Email verified successfully. Your account is now active.',
+        ...tokens,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          partner: user.partner,
+        },
+      };
+    }
+
+    // 2. Fallback to DB check (for users who already were inserted before this update)
+    const dbUser = (await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
       include: {
         partner: {
@@ -405,19 +475,19 @@ export class AuthService {
       },
     })) as (UserWithSecurity & { partner: any }) | null;
 
-    if (!user) throw new NotFoundException('User not found');
-    if (user.isEmailVerified) throw new BadRequestException('Email already verified');
-    if (!user.emailVerifyToken) throw new BadRequestException('No verification pending');
+    if (!dbUser) throw new NotFoundException('User not found');
+    if (dbUser.isEmailVerified) throw new BadRequestException('Email already verified');
+    if (!dbUser.emailVerifyToken) throw new BadRequestException('No verification pending');
 
-    if (user.emailVerifyExpires && new Date() > user.emailVerifyExpires)
+    if (dbUser.emailVerifyExpires && new Date() > dbUser.emailVerifyExpires)
       throw new BadRequestException('Verification code expired. Please request a new one.');
 
     // SECURITY: Brute-force protection for OTP
-    const otpAttempts = user.failedLoginAttempts ?? 0;
+    const otpAttempts = dbUser.failedLoginAttempts ?? 0;
     if (otpAttempts >= MAX_OTP_ATTEMPTS) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await this.prisma.user.update({
-        where: { id: user.id },
+        where: { id: dbUser.id },
         data: { emailVerifyToken: null, emailVerifyExpires: null, failedLoginAttempts: 0 } as any,
       });
       throw new BadRequestException(
@@ -426,11 +496,11 @@ export class AuthService {
     }
 
     // SECURITY: Timing-safe OTP comparison
-    if (!this.safeCompareOtp(dto.code, user.emailVerifyToken as string)) {
+    if (!this.safeCompareOtp(dto.code, dbUser.emailVerifyToken as string)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await this.prisma.user.update({
-        where: { id: user.id },
-        data: { failedLoginAttempts: (user.failedLoginAttempts ?? 0) + 1 } as any,
+        where: { id: dbUser.id },
+        data: { failedLoginAttempts: (dbUser.failedLoginAttempts ?? 0) + 1 } as any,
       });
       throw new BadRequestException('Invalid verification code');
     }
@@ -438,7 +508,7 @@ export class AuthService {
     // Activate account and mark email as verified
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id: dbUser.id },
       data: {
         isEmailVerified: true,
         isActive: true, // Activate the account
@@ -450,33 +520,63 @@ export class AuthService {
 
     // Send welcome email
     this.mailService.sendWelcomeEmail(
-      user.email,
-      user.firstName,
-      user.role as 'CLIENT' | 'PARTNER',
+      dbUser.email,
+      dbUser.firstName,
+      dbUser.role as 'CLIENT' | 'PARTNER',
     );
 
     // Now issue tokens so the user can log in immediately after verification
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
+    const tokens = await this.generateTokens(dbUser.id, dbUser.email, dbUser.role);
+    await this.saveRefreshToken(dbUser.id, tokens.refreshToken);
 
     return {
       message: 'Email verified successfully. Your account is now active.',
       ...tokens,
       user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        partner: user.partner,
+        id: dbUser.id,
+        email: dbUser.email,
+        firstName: dbUser.firstName,
+        lastName: dbUser.lastName,
+        role: dbUser.role,
+        partner: dbUser.partner,
       },
     };
   }
 
   // ===== RESEND VERIFICATION =====
   async resendVerification(dto: ResendVerificationDto) {
+    const normalizedEmail = dto.email.toLowerCase().trim();
+
+    // 1. Check in-memory pending registrations first
+    if (this.pendingRegistrations.has(normalizedEmail)) {
+      const pending = this.pendingRegistrations.get(normalizedEmail)!;
+      
+      if (pending.expires) {
+        const tokenIssuedAt = new Date(pending.expires.getTime() - 60 * 1000);
+        const elapsed = Date.now() - tokenIssuedAt.getTime();
+        const remaining = Math.ceil((60 * 1000 - elapsed) / 1000);
+        if (remaining > 0) {
+          throw new BadRequestException(`Veuillez patienter ${remaining} seconde(s) avant de renvoyer le code.`);
+        }
+      }
+
+      const otp = this.generateOtp();
+      const otpExpires = new Date(Date.now() + 1 * 60 * 1000);
+      
+      pending.otp = otp;
+      pending.expires = otpExpires;
+      
+      await this.mailService.sendVerificationEmail(normalizedEmail, otp);
+
+      return {
+        message: 'Verification code sent',
+        ...(this.config.get('NODE_ENV') !== 'production' && { verificationCode: otp }),
+      };
+    }
+
+    // 2. Fallback to database
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase().trim() },
+      where: { email: normalizedEmail },
     });
 
     if (!user) throw new NotFoundException('User not found');

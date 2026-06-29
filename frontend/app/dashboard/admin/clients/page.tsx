@@ -48,8 +48,8 @@ export default function AdminClientsPage() {
   const filtered = clients.filter(c => {
     const wilayaName = typeof c.wilaya === 'string' ? c.wilaya : (c.wilaya?.name || '')
     return !search ||
-      `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase().includes(search.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
       wilayaName.toLowerCase().includes(search.toLowerCase())
   })
 

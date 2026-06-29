@@ -73,13 +73,8 @@ export default function RegisterClientPage() {
         acceptTerms: form.acceptTerms,
       });
       
-      if (res.accessToken) {
-        localStorage.setItem('access_token', res.accessToken);
-        localStorage.setItem('refresh_token', res.refreshToken);
-        await useAuthStore.getState().initialize();
+      if (res.message || res.email) {
         toast.success(t(d.clientSuccess));
-        
-        const userState = useAuthStore.getState().user;
         router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
       }
     } catch (error: any) {
