@@ -42,8 +42,10 @@ async function bootstrap() {
   app.use(compression());
 
   // ===== CORS (Web + Flutter) =====
-  const allowedOrigins = [
-    config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000',
+  const frontendUrls = (config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000')
+    .split(',').map(o => o.trim());
+const allowedOrigins = [
+    ...frontendUrls,
     'capacitor://localhost',
     'ionic://localhost',
     'http://localhost', // Flutter web dev

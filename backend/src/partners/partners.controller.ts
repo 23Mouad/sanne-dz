@@ -26,8 +26,14 @@ const imageUploadInterceptor = (subDir: string) =>
       destination: join(process.cwd(), 'uploads', subDir),
       filename: (_req, file, cb) => cb(null, `${uuidv4()}${extname(file.originalname)}`),
     }),
+    fileFilter: (_req, file, cb) => {
+      if (!file.mimetype.match(/^image\/(jpeg|png|webp)$/)) {
+        return cb(new Error('Only jpeg, png, webp images are allowed'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 },
   });
-
 const videoUploadInterceptor = (subDir: string) =>
   FileInterceptor('file', {
     storage: diskStorage({
@@ -35,21 +41,15 @@ const videoUploadInterceptor = (subDir: string) =>
       filename: (_req, file, cb) => cb(null, `${uuidv4()}${extname(file.originalname)}`),
     }),
   });
+const imageFilePipe = new ParseFilePipe({ validators: [] });
 
-const imageFilePipe = new ParseFilePipe({
-  validators: [
-    new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-    new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
-  ],
-});
 
-const videoFilePipe = new ParseFilePipe({
-  validators: [
-    new MaxFileSizeValidator({ maxSize: 50 * 1024 * 1024 }), // 50MB for videos
-    new FileTypeValidator({ fileType: /^video\/(mp4|webm|quicktime)$/ }),
-  ],
-  fileIsRequired: false,
-});
+
+const videoFilePipe = new ParseFilePipe({ validators: [] });
+
+
+
+
 
 @ApiTags('Partners')
 @Controller('partners')
