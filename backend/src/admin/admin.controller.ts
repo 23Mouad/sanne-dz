@@ -69,9 +69,12 @@ export class AdminController {
   @Get('users')
   getUsers(
     @Query('search') search: string,
-    @Query('page') page: number,
+    @Query('page') page: string,
     @Query('status') status: string,
-  ) { return this.adminService.getUsers(search, page, undefined, status); }
+  ) { 
+    const pageNum = page && !isNaN(parseInt(page)) ? parseInt(page) : 1;
+    return this.adminService.getUsers(search, pageNum, undefined, status); 
+  }
 
   @Put('users/:id/ban')
   banUser(@Param('id') id: string) { return this.adminService.banUser(id); }

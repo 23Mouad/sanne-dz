@@ -23,6 +23,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'api.dicebear.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.textile-dz.tech',
+      },
+      {
+        protocol: 'https',
+        hostname: 'textile-dz.tech',
+      },
     ],
   },
   // Security headers for all routes

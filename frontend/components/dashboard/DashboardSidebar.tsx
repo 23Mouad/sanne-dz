@@ -58,7 +58,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
     if (user?.role === 'admin') {
       Promise.all([
         api.get('/admin/partners?status=PENDING&page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-        api.get('/reviews/pending?page=1').catch(() => ({ data: { meta: { total: 0 } } })),
+        api.get('/reviews/admin/all?status=PENDING&page=1').catch(() => ({ data: { meta: { total: 0 } } })),
         api.get('/subscriptions/payments/pending?page=1').catch(() => ({ data: { meta: { total: 0 } } }))
       ]).then(([partnersRes, reviewsRes, paymentsRes]) => {
         setPendingCounts({

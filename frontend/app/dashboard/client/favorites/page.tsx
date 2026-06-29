@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { Heart, MapPin, Star, MessageCircle, Trash2 } from 'lucide-react'
 import { buildWhatsAppLink, getImageUrl } from '@/lib/utils'
 import { useFavoritesStore } from '@/store/useFavoritesStore'
@@ -72,7 +71,7 @@ export default function ClientFavoritesPage() {
           {favorites.map(p => (
             <div key={p.id} className="card overflow-hidden hover:-translate-y-1 group">
               <div className="relative h-40">
-                <Image src={getImageUrl(p.coverUrl)} alt={p.businessName} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="400px" />
+                <img src={getImageUrl(p.coverUrl)} alt={p.businessName} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 <button onClick={() => handleRemove(p.id)}
                   className="absolute top-2 right-2 rtl:right-auto rtl:left-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm

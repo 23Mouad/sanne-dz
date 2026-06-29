@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
         const [statsData, partnersRes, reviewsRes] = await Promise.all([
           AdminService.getStats(),
           AdminService.getPartners('PENDING'),
-          api.get('/reviews/pending?page=1').catch(() => ({ data: { data: [] } }))
+          api.get('/reviews/admin/all?status=PENDING&page=1').catch(() => ({ data: { data: [] } }))
         ])
         setStats(statsData)
         setPendingPartners(partnersRes.data || [])
