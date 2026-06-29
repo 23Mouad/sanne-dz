@@ -10,7 +10,7 @@ import { getImageUrl } from '@/lib/utils'
 
 async function getPartnerBySlug(slug: string): Promise<Partner | null> {
   try {
-    const res = await fetch(`${API_URL}/partners/${slug}`, { next: { revalidate: 60 } })
+    const res = await fetch(`${API_URL}/partners/${slug}`, { cache: 'no-store' })
     if (!res.ok) return null
     const json = await res.json()
     return json.data || null

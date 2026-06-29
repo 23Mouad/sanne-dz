@@ -95,6 +95,7 @@ export default function PartnerReviews({ partnerId, rating, reviewCount }: Partn
         setNewRating(0); 
         setNewComment('');
         loadReviews();
+        window.location.reload(); // Force page refresh to update overall rating
       }, 2000)
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Échec de la soumission de l\'avis'
