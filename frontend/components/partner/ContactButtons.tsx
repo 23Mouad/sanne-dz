@@ -36,19 +36,14 @@ export default function ContactButtons({ partner }: { partner: Partner }) {
       return
     }
     const currentlyFav = isFavorite(partner.id)
-    toggleFavorite(partner.id) // Optimistic update
-    
     try {
+      await toggleFavorite(partner.id)
       if (currentlyFav) {
-        await api.delete(`/favorites/${partner.id}`)
         toast.success('Retiré des favoris')
       } else {
-        await api.post(`/favorites/${partner.id}`)
         toast.success('Ajouté aux favoris')
       }
     } catch (err) {
-      // Revert on error
-      toggleFavorite(partner.id)
       toast.error('Erreur lors de la mise à jour des favoris')
     }
   }

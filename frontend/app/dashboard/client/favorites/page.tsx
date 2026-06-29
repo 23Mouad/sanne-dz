@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, MapPin, Star, MessageCircle, Trash2 } from 'lucide-react'
 import { buildWhatsAppLink, getImageUrl } from '@/lib/utils'
+import { useFavoritesStore } from '@/store/useFavoritesStore'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import { useT } from '@/hooks/useT'
@@ -14,6 +15,7 @@ import { translations } from '@/lib/i18n/translations'
 export default function ClientFavoritesPage() {
   const t = useT()
   const d = translations.clientDashboard
+  const toggleFavorite = useFavoritesStore(s => s.toggleFavorite)
 
   const [favorites, setFavorites] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +39,7 @@ export default function ClientFavoritesPage() {
 
   const handleRemove = async (id: string) => {
     try {
-      await api.delete(`/favorites/${id}`)
+      await toggleFavorite(id) // This will call api.delete under the hood since it's already favored
       setFavorites(prev => prev.filter(p => p.id !== id))
       toast.success('Retiré des favoris')
     } catch (err) {

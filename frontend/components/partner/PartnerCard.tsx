@@ -8,6 +8,8 @@ import { useFavoritesStore } from '@/store/useFavoritesStore'
 import { buildWhatsAppLink, getImageUrl } from '@/lib/utils'
 import type { Partner } from '@/types'
 import api from '@/lib/api'
+import { useAuthStore } from '@/store/useAuthStore'
+import toast from 'react-hot-toast'
 
 interface PartnerCardProps {
   partner: Partner
@@ -18,10 +20,22 @@ export default function PartnerCard({ partner, compact = false }: PartnerCardPro
   const { toggleFavorite, isFavorite } = useFavoritesStore()
   const [mounted, setMounted] = useState(false)
 
+  const { isAuthenticated, user } = useAuthStore()
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAuthenticated || !user) {
+      toast.error('Vous devez être connecté pour ajouter aux favoris')
+      return
+    }
+    await toggleFavorite(partner.id)
+  }
 
   const handleWhatsappClick = () => api.post(`/partners/${partner.id}/whatsapp-click`).catch(() => {})
   const handlePhoneClick = () => api.post(`/partners/${partner.id}/phone-click`).catch(() => {})
@@ -54,7 +68,7 @@ export default function PartnerCard({ partner, compact = false }: PartnerCardPro
 
         {/* Favorite */}
         <button
-          onClick={() => toggleFavorite(partner.id)}
+          onClick={handleFavoriteClick}
           className="absolute top-2 left-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm
                       flex items-center justify-center shadow-sm
                       hover:scale-110 transition-all duration-200 group/fav"

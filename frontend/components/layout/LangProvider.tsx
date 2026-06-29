@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react'
 import { useLanguageStore } from '@/store/useLanguageStore'
+import { useFavoritesStore } from '@/store/useFavoritesStore'
+import { useAuthStore } from '@/store/useAuthStore'
 
 /**
  * LangProvider — Composant client qui applique dir/lang sur <html>
@@ -9,6 +11,14 @@ import { useLanguageStore } from '@/store/useLanguageStore'
  */
 export default function LangProvider({ children }: { children: React.ReactNode }) {
   const lang = useLanguageStore((s) => s.lang)
+  const syncFavorites = useFavoritesStore((s) => s.syncFavorites)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      syncFavorites()
+    }
+  }, [isAuthenticated, syncFavorites])
 
   useEffect(() => {
     const html = document.documentElement

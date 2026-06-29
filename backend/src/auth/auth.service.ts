@@ -361,7 +361,6 @@ export class AuthService {
       const pending = this.pendingRegistrations.get(normalizedEmail)!;
       
       if (pending.expires && new Date() > pending.expires) {
-        this.pendingRegistrations.delete(normalizedEmail);
         throw new BadRequestException('Verification code expired. Please request a new one.');
       }
       

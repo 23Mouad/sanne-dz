@@ -111,13 +111,13 @@ export default function ClientProfilePage() {
               )}
             </div>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
-            <button 
+            {/* <button 
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 rtl:right-auto rtl:-left-1 w-7 h-7 rounded-full bg-[#C2517A] flex items-center justify-center
                                text-white shadow-md hover:bg-[#a8365f] transition-colors">
               <Camera size={13} />
-            </button>
+            </button> */}
           </div>
           <div>
             <p className="font-bold text-gray-900">{form.firstName} {form.lastName}</p>

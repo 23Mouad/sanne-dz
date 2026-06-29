@@ -81,12 +81,12 @@ export default function ClientReviewsPage() {
                         {partner.businessName}
                       </Link>
                     )}
-                    {partner && (
+                    {/* {partner && (
                       <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                         <MapPin size={11} className="text-[#C2517A]" />
                         {partner.wilaya?.name || partner.wilaya} · {partner.categories?.[0]?.category?.name || partner.category?.name || ''}
                       </p>
-                    )}
+                    )} */}
                     <div className="flex items-center gap-2 mt-2">
                       <StarRating rating={review.rating} size={14} />
                       <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
