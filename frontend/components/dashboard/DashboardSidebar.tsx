@@ -110,7 +110,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
           <div className="flex items-center justify-center w-8 h-8 overflow-hidden">
             <Image src="/logoMain.png" alt="Sanne Logo" width={32} height={32} style={{ width: '100%', height: 'auto' }} />
           </div>
-          <span className="text-lg font-bold gradient-text">Sanne<span className="text-[#7F77DD]"> Textile DZ</span></span>
+          <span className="text-lg font-bold gradient-text">Sanne Textile DZ</span>
         </Link>
         {onMobileClose && (
           <button onClick={onMobileClose} className="lg:hidden text-gray-400 hover:text-gray-600">

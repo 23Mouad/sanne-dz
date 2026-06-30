@@ -324,35 +324,22 @@ export class AdminService {
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
       
       const [mUsers, mPartners, mRevenueAggr] = await Promise.all([
-        this.prisma.user.count({ where: { role: 'CLIENT', createdAt: { gte: startOfMonth, lte: endOfMonth } } }),
-        this.prisma.partner.count({ where: { createdAt: { gte: startOfMonth, lte: endOfMonth } } }),
+        this.prisma.user.count({ where: { role: 'CLIENT', createdAt: { gte: startOfMonth, lt: startOfNextMonth } } }),
+        this.prisma.partner.count({ where: { createdAt: { gte: startOfMonth, lt: startOfNextMonth } } }),
         this.prisma.payment.aggregate({
           _sum: { amount: true },
-          where: { status: 'SUCCESS', createdAt: { gte: startOfMonth, lte: endOfMonth } }
+          where: { status: 'SUCCESS', createdAt: { gte: startOfMonth, lt: startOfNextMonth } }
         }),
       ]);
       
-      let fakeUsers = mUsers;
-      let fakePartners = mPartners;
-      let fakeRevenue = mRevenueAggr._sum.amount || 0;
-
-      // If there's no data (e.g. new platform), inject some realistic fake data for previous months
-      // so the chart isn't stuck at 0.
-      if (mUsers === 0 && mPartners === 0) {
-        const fakeGrowthMultiplier = 6 - i; // 1 to 6
-        fakeUsers = Math.floor(Math.random() * 5 * fakeGrowthMultiplier) + 5;
-        fakePartners = Math.floor(Math.random() * 3 * fakeGrowthMultiplier) + 2;
-        fakeRevenue = fakePartners * (proMonthlyPrice * (Math.random() * 0.3)); 
-      }
-
       monthlyGrowth.push({
         month: startOfMonth.toLocaleString('fr-DZ', { month: 'short' }),
-        users: fakeUsers,
-        partners: fakePartners,
-        revenue: fakeRevenue,
+        users: mUsers,
+        partners: mPartners,
+        revenue: mRevenueAggr._sum.amount || 0,
       });
     }
 
