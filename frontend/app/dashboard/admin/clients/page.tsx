@@ -34,7 +34,10 @@ export default function AdminClientsPage() {
       if (status && status !== 'all') params.set('status', status)
       const res = await api.get(`/admin/users?${params.toString()}`)
       const payload = res.data?.data ?? res.data
-      setClients(Array.isArray(payload) ? payload : [])
+      const actualClients = Array.isArray(payload) 
+        ? payload 
+        : (payload?.data && Array.isArray(payload.data) ? payload.data : [])
+      setClients(actualClients)
     } catch (err) {
       toast.error('Failed to load clients')
     } finally {
