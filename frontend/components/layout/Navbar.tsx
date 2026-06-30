@@ -81,8 +81,8 @@ export default function Navbar() {
 
             {/* ===== Logo ===== */}
             <Link href="/" className="flex-shrink-0 flex items-center gap-1 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C2517A] to-[#7F77DD] flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <Image src='/logoMain.png' alt="Sanne Logo" width={32} height={32} style={{ width: 'auto', height: 'auto' }} />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#C2517A] to-[#7F77DD] flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow overflow-hidden shrink-0">
+                <Image src='/logoMain.png' alt="Sanne Logo" width={32} height={32} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <span className="text-xl font-bold text-[#C2517A] ml-1">Sanne Textile</span>
               <span className="text-xl font-bold text-[#C2517A]">DZ</span>

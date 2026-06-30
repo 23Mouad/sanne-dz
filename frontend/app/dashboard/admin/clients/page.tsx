@@ -26,6 +26,7 @@ export default function AdminClientsPage() {
   const [clientReviews, setClientReviews] = useState<any[]>([])
   const [clientToBlock, setClientToBlock] = useState<string | null>(null)
   const [clientToUnblock, setClientToUnblock] = useState<string | null>(null)
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null)
 
   const load = async (status?: string) => {
     setLoading(true)
@@ -90,6 +91,19 @@ export default function AdminClientsPage() {
       toast.error('Failed to unblock client')
     } finally {
       setClientToUnblock(null)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!clientToDelete) return
+    try {
+      await api.delete(`/admin/users/${clientToDelete}`)
+      setClients(prev => prev.filter(c => c.id !== clientToDelete))
+      toast.success('Compte supprimé avec succès')
+    } catch (err) {
+      toast.error('Échec de la suppression du compte')
+    } finally {
+      setClientToDelete(null)
     }
   }
 
@@ -221,6 +235,13 @@ export default function AdminClientsPage() {
                           {t(d.block)}
                         </button>
                       )}
+                      <button
+                        onClick={() => setClientToDelete(c.id)}
+                        className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50
+                                         px-2 py-1 rounded-lg transition-colors font-medium flex items-center gap-1 ml-1 rtl:mr-1 rtl:ml-0">
+                        <X size={12} />
+                        Supprimer
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -328,6 +349,38 @@ export default function AdminClientsPage() {
               className="flex-1 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
               <ShieldCheck size={14} /> Débloquer
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!clientToDelete}
+        onClose={() => setClientToDelete(null)}
+        title="Supprimer le compte"
+        size="sm"
+      >
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto">
+            <AlertTriangle size={28} className="text-red-500" />
+          </div>
+          <div>
+            <p className="text-gray-700 font-medium">Supprimer définitivement ce compte ?</p>
+            <p className="text-gray-400 text-sm mt-1">Cette action est irréversible et supprimera totalement l'utilisateur de la base de données. L'utilisateur pourra se réinscrire à l'avenir.</p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setClientToDelete(null)}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <X size={14} /> Supprimer
             </button>
           </div>
         </div>

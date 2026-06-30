@@ -107,8 +107,8 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-pink-100">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 overflow-hidden">
-            <Image src="/logoMain.png" alt="Sanne Logo" width={32} height={32} style={{ width: '100%', height: 'auto' }} />
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md">
+            <Image src="/logoMain.png" alt="Sanne Logo" width={32} height={32} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <span className="text-lg font-bold gradient-text">Sanne Textile DZ</span>
         </Link>

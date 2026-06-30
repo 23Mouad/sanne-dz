@@ -539,8 +539,7 @@ export default function PortfolioTabs({ partner }: { partner: Partner }) {
                 {[
                   { icon: MapPin, label: t(d.labelWilaya),   value: typeof partner.wilaya === 'string' ? partner.wilaya : partner.wilaya?.name },
                   { icon: Phone,  label: t(d.labelPhone),    value: partner.phone, ltr: true },
-                  { icon: Truck,  label: t(d.labelDelivery), value: t(d.deliveryVal) },
-                  { icon: Clock,  label: t(d.labelDelay),    value: t(d.delayVal) },
+                  { icon: Truck,  label: lang === 'ar' ? 'شركة التوصيل' : 'Société de livraison', value: partner.deliveryType || (lang === 'ar' ? 'غير محدد' : 'Non spécifié') },
                 ].map(({ icon: Icon, label, value, ltr }) => (
                   <div key={label} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
                     <Icon size={16} className="text-[#C2517A] mt-0.5 shrink-0" />
@@ -558,7 +557,7 @@ export default function PortfolioTabs({ partner }: { partner: Partner }) {
                   { label: t(d.condMinOrder),  value: partner.minOrder || t(d.condMinOrderVal), ok: !partner.minOrder || partner.minOrder.toLowerCase() === 'aucune' },
                   { label: t(d.condRemote),     value: partner.remoteWork ? 'Accepté' : 'Non',   ok: partner.remoteWork },
                   { label: t(d.condAppt),       value: partner.appointmentStatus || t(d.condApptVal),     ok: partner.appointmentStatus !== 'Oui' },
-                  { label: t(d.condDelivery),   value: partner.deliveryAvailable ? 'Oui' : 'Non', ok: partner.deliveryAvailable },
+                  { label: t(d.condDelivery),   value: partner.deliveryAvailable ? (lang === 'ar' ? 'نعم' : 'Oui') : (lang === 'ar' ? 'لا' : 'Non'), ok: partner.deliveryAvailable },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between text-sm py-1.5 border-b border-pink-50 last:border-0">
                     <span className="text-gray-600">{item.label}</span>
