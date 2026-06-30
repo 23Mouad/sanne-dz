@@ -33,7 +33,8 @@ export default function AdminClientsPage() {
       const params = new URLSearchParams()
       if (status && status !== 'all') params.set('status', status)
       const res = await api.get(`/admin/users?${params.toString()}`)
-      setClients((res.data?.data ?? res.data) || [])
+      const payload = res.data?.data ?? res.data
+      setClients(Array.isArray(payload) ? payload : [])
     } catch (err) {
       toast.error('Failed to load clients')
     } finally {
@@ -91,8 +92,9 @@ export default function AdminClientsPage() {
 
   const dateLocale = lang === 'ar' ? 'ar-DZ' : 'fr-DZ'
 
-  const activeCount = clients.filter(c => c.isActive !== false).length
-  const blockedCount = clients.filter(c => c.isActive === false).length
+  const safeClients = Array.isArray(clients) ? clients : []
+  const activeCount = safeClients.filter(c => c.isActive !== false).length
+  const blockedCount = safeClients.filter(c => c.isActive === false).length
 
   return (
     <div className="space-y-6">
