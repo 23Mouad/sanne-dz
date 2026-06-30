@@ -66,6 +66,30 @@ export default function PartnerDashboardPage() {
     return <div>Failed to load partner profile.</div>
   }
 
+  const calculateCompleteness = () => {
+    let score = 0
+    let total = 0
+    
+    const check = (val: any) => {
+      total++
+      if (val) score++
+    }
+    
+    check(partner.logoUrl)
+    check(partner.coverUrl)
+    check(partner.description)
+    check(partner.address)
+    check(partner.wilaya)
+    check(partner.phone)
+    check(partner.schedule)
+    check(partner.categories && partner.categories.length > 0)
+    check(partner.photos && partner.photos.length >= 3)
+    
+    return Math.round((score / total) * 100)
+  }
+  
+  const pct = calculateCompleteness()
+
   // TODO: Fetch reviews from API
   const recentReviews: any[] = []
 
@@ -167,16 +191,18 @@ export default function PartnerDashboardPage() {
       )}
 
       {/* Profile completion warning */}
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-        <AlertCircle size={18} className="text-amber-500 mt-0.5 shrink-0" />
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-amber-800">{t(d.profilePct)}</p>
-          <p className="text-xs text-amber-600 mt-0.5">{t(d.profileHint)}</p>
+      {pct < 100 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle size={18} className="text-amber-500 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-800">{t(d.profilePct).replace('65', pct.toString())}</p>
+            <p className="text-xs text-amber-600 mt-0.5">{t(d.profileHint)}</p>
+          </div>
+          <Link href="/dashboard/partner/profile" className="flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline whitespace-nowrap">
+            {t(d.complete)} <ArrowRight size={12} />
+          </Link>
         </div>
-        <Link href="/dashboard/partner/profile" className="flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline whitespace-nowrap">
-          {t(d.complete)} <ArrowRight size={12} />
-        </Link>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title={t(d.profileViews)}   value={(partner.stats?.profileViews || 0).toLocaleString('fr-DZ')} icon={Eye}           color="rose"   isBlurred={!partner.isPro} />

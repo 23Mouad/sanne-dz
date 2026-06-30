@@ -43,11 +43,23 @@ export default function PartnerSubscriptionPage() {
   }, [])
 
   const plan = isPro ? 'pro' : 'simple'
-  // Determine if there's an active sub and its end date
-  // Since we fetch history, we can assume the renewal date is related to the last SUCCESS payment
-  // but for simplicity we'll just keep a generic label or if backend provided subscription endDate, use it.
-  const renewalDate = '15 Juillet 2025' // This would ideally come from the user's subscription profile
+
+  let renewalDateStr = ''
+  if (history && history.length > 0) {
+    const lastSuccess = history.find(h => h.status === 'SUCCESS')
+    if (lastSuccess) {
+      const dDate = new Date(lastSuccess.createdAt)
+      if (lastSuccess.metadata?.cycle === 'ANNUAL') {
+        dDate.setFullYear(dDate.getFullYear() + 1)
+      } else {
+        dDate.setMonth(dDate.getMonth() + 1)
+      }
+      renewalDateStr = dDate.toLocaleDateString('fr-DZ', { day: 'numeric', month: 'long', year: 'numeric' })
+    }
+  }
+
   const proPriceMonthly = config?.proPriceMonthly ?? SUBSCRIPTION_CONFIG.proPriceMonthly
+  const proPriceAnnual = config?.proPriceAnnual ?? SUBSCRIPTION_CONFIG.proPriceAnnual
   
   const proFeatures = d.features[lang]
 
@@ -96,10 +108,10 @@ export default function PartnerSubscriptionPage() {
           </div>
           <div className="text-right">
             <span className="badge-active">{t(d.active)}</span>
-            {isPro && (
+            {isPro && renewalDateStr && (
               <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
                 <Calendar size={11} />
-                {t(d.renewal)} {renewalDate}
+                {t(d.renewal)} {renewalDateStr}
               </p>
             )}
           </div>
@@ -134,9 +146,15 @@ export default function PartnerSubscriptionPage() {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/dashboard/partner/subscription/payment" className="btn-primary flex-1 text-center">
-              <Sparkles size={16} />
-              {t(d.upgradeBtn)} — {proPriceMonthly.toLocaleString('fr-DZ')} DA/mois
+            <Link href="/dashboard/partner/subscription/payment?cycle=MONTHLY" className="btn-outline flex-1 text-center py-2.5">
+              Mensuel — {proPriceMonthly.toLocaleString('fr-DZ')} DA
+            </Link>
+            <Link href="/dashboard/partner/subscription/payment?cycle=ANNUAL" className="btn-primary flex-1 text-center py-2.5 relative">
+              <Sparkles size={16} className="inline mr-1" />
+              Annuel — {proPriceAnnual.toLocaleString('fr-DZ')} DA
+              <span className="absolute -top-3 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                -20%
+              </span>
             </Link>
           </div>
         </div>

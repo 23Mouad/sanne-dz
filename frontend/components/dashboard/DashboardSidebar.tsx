@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
   LayoutDashboard, Heart, Star, User, Bell,
-  Briefcase, Image, CreditCard, BarChart2,
+  Briefcase, Image as ImageIcon, CreditCard, BarChart2,
   Users, Settings, CheckSquare, Tag, Megaphone,
   TrendingUp, Download, LogOut, Sparkles, Home, X
 } from 'lucide-react'
@@ -45,7 +46,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
   const partnerNav: NavItem[] = [
     { href: '/dashboard/partner',              labelKey: s.nav.overview,      icon: LayoutDashboard },
     { href: '/dashboard/partner/profile',      labelKey: s.nav.bizProfile,    icon: Briefcase },
-    { href: '/dashboard/partner/portfolio',    labelKey: s.nav.portfolio,     icon: Image },
+    { href: '/dashboard/partner/portfolio',    labelKey: s.nav.portfolio,     icon: ImageIcon },
     { href: '/dashboard/partner/products',     labelKey: { fr: 'Produits', ar: 'المنتجات' }, icon: Sparkles },
     { href: '/dashboard/partner/reviews',      labelKey: s.nav.receivedRevs,  icon: Star },
     { href: '/dashboard/partner/stats',        labelKey: s.nav.stats,         icon: BarChart2, badge: 'Pro' },
@@ -106,8 +107,8 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-pink-100">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C2517A] to-[#7F77DD] flex items-center justify-center">
-            <Sparkles size={15} className="text-white" />
+          <div className="flex items-center justify-center w-8 h-8 overflow-hidden">
+            <Image src="/logoMain.png" alt="Sanne Logo" width={32} height={32} style={{ width: '100%', height: 'auto' }} />
           </div>
           <span className="text-lg font-bold gradient-text">Sanne<span className="text-[#7F77DD]"> Textile DZ</span></span>
         </Link>

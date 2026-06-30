@@ -330,7 +330,7 @@ export default function AdminCategoriesPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900">{cat.name}</p>
                     <p className="text-xs text-gray-400">
-                      {cat.partnerCount || 0} {t(d.partnersAssoc)}
+                      {(cat as any)._count?.partners ?? cat.partnerCount ?? 0} {t(d.partnersAssoc)}
                     </p>
                   </div>
                 )}

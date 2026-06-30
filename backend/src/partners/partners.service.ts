@@ -91,6 +91,12 @@ export class PartnersService {
       this.prisma.partner.count({ where }),
     ]);
 
+    partners.forEach(p => {
+      if (!p.isPro && p.categories && p.categories.length > 1) {
+        p.categories = [p.categories[0]];
+      }
+    });
+
     return {
       data: partners,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
@@ -99,12 +105,20 @@ export class PartnersService {
 
   // ===== PUBLIC: Featured Partners =====
   async findFeatured() {
-    return this.prisma.partner.findMany({
+    const partners = await this.prisma.partner.findMany({
       where: { status: PartnerStatus.ACTIVE, isFeatured: true },
       take: 10,
       select: this.partnerSelect,
       orderBy: { rating: 'desc' },
     });
+
+    partners.forEach(p => {
+      if (!p.isPro && p.categories && p.categories.length > 1) {
+        p.categories = [p.categories[0]];
+      }
+    });
+
+    return partners;
   }
 
   // ===== PUBLIC: Get by Slug =====
@@ -127,6 +141,11 @@ export class PartnersService {
     });
     if (!partner || partner.status !== PartnerStatus.ACTIVE)
       throw new NotFoundException('Partner not found');
+
+    if (!partner.isPro && partner.categories && partner.categories.length > 1) {
+      partner.categories = [partner.categories[0]] as any;
+    }
+
     return partner;
   }
 
@@ -197,6 +216,10 @@ export class PartnersService {
       select: { ...this.partnerSelect, products: true, createdAt: true },
     });
     if (!partner) throw new NotFoundException('Partner profile not found');
+
+    if (!partner.isPro && partner.categories && partner.categories.length > 1) {
+      partner.categories = [partner.categories[0]] as any;
+    }
 
     // Sync daily fake stats so numbers grow each day
     if (partner.stats) {

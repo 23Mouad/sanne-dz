@@ -38,12 +38,13 @@ export default function PartnerReviewsPage() {
     load(page)
   }, [page])
 
-  const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
+  const safeReviews = Array.isArray(reviews) ? reviews : []
+  const avg = safeReviews.length ? safeReviews.reduce((s, r) => s + (r?.rating || 0), 0) / safeReviews.length : 0
 
   const breakdown = [5, 4, 3, 2, 1].map(star => ({
     star,
-    count: reviews.filter(r => Math.round(r.rating) === star).length,
-    pct: reviews.length ? Math.round(reviews.filter(r => Math.round(r.rating) === star).length / reviews.length * 100) : 0,
+    count: safeReviews.filter(r => Math.round(r?.rating || 0) === star).length,
+    pct: safeReviews.length ? Math.round(safeReviews.filter(r => Math.round(r?.rating || 0) === star).length / safeReviews.length * 100) : 0,
   }))
 
   if (loading) {
@@ -61,7 +62,7 @@ export default function PartnerReviewsPage() {
           <Star size={28} className="text-yellow-400 fill-yellow-400" />
           {t(d.title)}
         </h1>
-        <p className="page-subtitle">{reviews.length} {t(d.subtitle)}</p>
+        <p className="page-subtitle">{safeReviews.length} {t(d.subtitle)}</p>
       </div>
 
       {/* Summary */}
@@ -70,7 +71,7 @@ export default function PartnerReviewsPage() {
           <div className="text-center shrink-0">
             <div className="text-5xl font-bold gradient-text">{avg.toFixed(1)}</div>
             <StarRating rating={avg} size={18} />
-            <p className="text-xs text-gray-400 mt-1">{reviews.length} {t(d.reviews)}</p>
+            <p className="text-xs text-gray-400 mt-1">{safeReviews.length} {t(d.reviews)}</p>
           </div>
           <div className="flex-1 space-y-2">
             {breakdown.map(({ star, count, pct }) => (
@@ -89,9 +90,9 @@ export default function PartnerReviewsPage() {
       </div>
 
       {/* Reviews list */}
-      {reviews.length > 0 ? (
+      {safeReviews.length > 0 ? (
         <div className="space-y-4">
-          {reviews.map(r => (
+          {safeReviews.map(r => (
             <div key={r.id} className="card p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3">

@@ -29,8 +29,7 @@ export default function Footer() {
                 <Image src="/logoMain.png" alt="Sanne Logo" width={36} height={36} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <span className="text-2xl font-bold">
-                <span className="text-[#ec6fa1]">Sanne</span>
-                <span className="text-[#9490e7]"> Textile DZ</span>
+                <span className="text-[#ec6fa1]">Sanne Textile DZ</span>
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
