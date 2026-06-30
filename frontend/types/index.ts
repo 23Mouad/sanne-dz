@@ -58,6 +58,7 @@ export interface Partner {
   minOrder?: string
   remoteWork?: boolean
   appointmentStatus?: string
+  deliveryType?: string
   deliveryAvailable?: boolean
   services?: string[]
   achievements?: string[]
